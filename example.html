@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Example for bootstraping a json-schema</title>
+		<!-- Resources you have to insert --> 
+		<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" title="Bootstrap CSS" media="screen"/>
+		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+		<script src="./jsch.js"></script>
+		<script type="text/javascript">
+$(document).ready(function(){
+  // Define a JSON-Schema
+  var schema = {
+    id: "http://atd-schubert.com/test",
+    title: "Test JSON Schema",
+    description: "A JSON schema to test Jsch",
+    type: ["null", "string", "object", "number", "integer"],
+    additionalProperties: false,
+    patternProperties: {
+      "^test":{
+        id:"http://atd-schubert.com/subtest",
+        title:"Subnode as pattern",
+        type:"string",
+        format:"email"
+      }
+    },
+    properties: {
+      sub:{
+        id:"http://atd-schubert.com/sub",
+        title: "The SUB-Schema",
+        description:"A sub schema",
+        type:["string", "object"]
+      }
+    }
+  };
+  
+  // Create a new Jsch object
+  jsch = new window.Jsch({jsonSchema: schema, data: "You can directly put content to the result json and display it"});
+  
+  // Append jsch-dom-root to an existing html-node to display...
+  $("#out").append(jsch.domElements.root);
+});
+    </script>
+	</head>
+	<body role="document">
+	  <div role="main">
+	  <div id="out"></div>
+      
+	  </div>
+	</body>
+</html>
+
