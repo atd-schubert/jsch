@@ -206,9 +206,9 @@
       return false;
     };
     
-    var addSubElement = function(name, value){ // TODO: If patternProperties and not additionalProperties, test for validity first, before creating
+    var addSubElement = function(name, value){
       if(element.domElements.types.object.jschProperties[name]) return;
-      if(!validPropertyName(name)) return; // TODO: alert(invalid)
+      if(!validPropertyName(name)) return;
       var subSchema = findSubSchema(name);
 console.log(element.Jsch);
       var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema}); // TODO: remove value
@@ -275,7 +275,7 @@ console.log(element.Jsch);
     
     $(newKeyName).on("input", function(){
       if(validPropertyName(newKeyName.value)) newKeyName.style.backgroundColor = "";
-      else newKeyName.style.backgroundColor = INVALIDCOLORß;
+      else newKeyName.style.backgroundColor = INVALIDCOLOR;
     });
     
     
