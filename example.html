@@ -17,6 +17,9 @@ $(document).ready(function(){
     type: ["null", "string", "object", "number", "integer"],
     minLength: 6,
     maxLength:12,
+    minimum: 6,
+    maximum:12,
+    exclusiveMinimum: true,
     pattern: "^(Test |test )",
     additionalProperties: false,
     patternProperties: {
