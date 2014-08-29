@@ -12,17 +12,19 @@
 (function(exports){
   var INVALIDCOLOR = "#ffaaaa";
   
-  var createAddon = function(name){
+  var createAddon = function(name, className){
     var elem = document.createElement("span");
-    $(elem).addClass("input-group-addon").append(name);
+    var $elem = $(elem);
+    $elem.addClass("input-group-addon").append(name);
+    if(className) $elem.addClass("jsch-validation-out-"+className)
     return elem;
   };
-	var setAttributes = function(elem, opts){
-		var hash;
-		for (hash in opts) {
-  		elem.setAttribute(hash, opts[hash]);
-		}
-	};
+  var setAttributes = function(elem, opts){
+    var hash;
+    for (hash in opts) {
+      elem.setAttribute(hash, opts[hash]);
+    }
+  };
   var createEnum = function(title, enums, target){
     var root = document.createElement("div");
     var $root = $(root).addClass("input-group-btn");
@@ -86,25 +88,25 @@
     
     var inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
-    if(element.getJsonSchema().pattern) inputGroup.appendChild(createAddon("RegExpr"));
-    if(element.getJsonSchema().minLength) inputGroup.appendChild(createAddon("n &ge; "+element.getJsonSchema().minLength));
-    if(element.getJsonSchema().maxLength) inputGroup.appendChild(createAddon("n &le; "+element.getJsonSchema().maxLength));
+    if(element.getJsonSchema().pattern) inputGroup.appendChild(createAddon("RegExpr", "string-pattern"));
+    if(element.getJsonSchema().minLength) inputGroup.appendChild(createAddon("n &ge; "+element.getJsonSchema().minLength, "string-minLength"));
+    if(element.getJsonSchema().maxLength) inputGroup.appendChild(createAddon("n &le; "+element.getJsonSchema().maxLength, "string-maxLength"));
     if(element.getJsonSchema().format) {
       switch (element.getJsonSchema().format) {
         case "email":
-          inputGroup.appendChild(createAddon("@"));
+          inputGroup.appendChild(createAddon("@", "string-format"));
           break;
         case "uri":
-          inputGroup.appendChild(createAddon("proto://"));
+          inputGroup.appendChild(createAddon("proto://", "string-format"));
           break;
         case "ipv4":
-          inputGroup.appendChild(createAddon("ip"));
+          inputGroup.appendChild(createAddon("ip", "string-format"));
           break;
         case "date-time":
         case "hostname":
         case "ipv6":
         default:
-          inputGroup.appendChild(createAddon(element.getJsonSchema().format));
+          inputGroup.appendChild(createAddon(element.getJsonSchema().format, "string-format"));
       }
     }
     if(!element.getJsonSchema().format && !element.getJsonSchema().minLength && !element.getJsonSchema().maxLength && !element.getJsonSchema().pattern) {
@@ -145,17 +147,17 @@
     var inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
     
-    if(element.getJsonSchema().multipleOf) inputGroup.appendChild(createAddon(element.getJsonSchema().multipleOf+" | x"));
-    else if(element.getJsonSchema().type === "integer") inputGroup.appendChild(createAddon("1 | x"));
+    if(element.getJsonSchema().multipleOf) inputGroup.appendChild(createAddon(element.getJsonSchema().multipleOf+" | x", "number-multipleOf"));
+    else if(element.getJsonSchema().type === "integer") inputGroup.appendChild(createAddon("1 | x", "number-multipleOf"));
     
     if(element.getJsonSchema().minLength) {
-      if(element.getJsonSchema().exclusiveMinimum) inputGroup.appendChild(createAddon("&gt; "+element.getJsonSchema().minLength));
-      else inputGroup.appendChild(createAddon("&ge; "+element.getJsonSchema().minLength));
+      if(element.getJsonSchema().exclusiveMinimum) inputGroup.appendChild(createAddon("&gt; "+element.getJsonSchema().minLength, "number-minLength"));
+      else inputGroup.appendChild(createAddon("&ge; "+element.getJsonSchema().minLength, "number-minLength"));
     }
     
     if(element.getJsonSchema().maxLength) {
-      if(element.getJsonSchema().exclusiveMaximum) inputGroup.appendChild(createAddon("&lt; "+element.getJsonSchema().maxLength));
-      else inputGroup.appendChild(createAddon("&le; "+element.getJsonSchema().maxLength));
+      if(element.getJsonSchema().exclusiveMaximum) inputGroup.appendChild(createAddon("&lt; "+element.getJsonSchema().maxLength, "number-maxLength"));
+      else inputGroup.appendChild(createAddon("&le; "+element.getJsonSchema().maxLength, "number-maxLength"));
     }
     if(!element.getJsonSchema().maxLength && !element.getJsonSchema().minLength && !element.getJsonSchema().multipleOf && element.getJsonSchema().type !== "integer") inputGroup.appendChild(createAddon("*"));
     $(elem).addClass("form-control");
@@ -355,151 +357,247 @@ console.log(element.Jsch);
   };
   
   var Element = function(opts){
-  	//# Error handling
-  	if(!opts.Jsch) throw new Error("Don't have a handle for the main Jsch controller");
-  	var self = this;
+    //# Error handling
+    if(!opts.Jsch) throw new Error("Don't have a handle for the main Jsch controller");
+    var self = this;
   
-  	//# private constants and variables
-  	var schema = opts.jsonSchema || opts.Jsch.getJsonSchema();
+    //# private constants and variables
+    var schema = opts.jsonSchema || opts.Jsch.getJsonSchema();
   
-  	//# private functions and objects
+    //# private functions and objects
     
-  	
-  	
-  	//# constructor
-  	
-  	// create DOM Elements
-  	this.domElements = {
-  		root: document.createElement("div"),
-  		type: document.createElement("input"),
-  		types: {
-    		string: document.createElement("input"),
-    		number: document.createElement("input"),
-    		boolean: document.createElement("input"),
-    		//null,
-    		array: document.createElement("ol"),
-    		object: document.createElement("ul")
-  		}
-  	};
-  	// Configure DOM-Elements
-  	setAttributes(this.domElements.root, {class: "jsch-element"}); // TODO: jsch-data-valid
-  	setAttributes(this.domElements.types.string, {type: "text", class: "jsch-data jsch-data-string"}); // TODO: jsch-data-valid
-  	setAttributes(this.domElements.types.number, {type: "number", class: "jsch-data jsch-data-number"}); // TODO: jsch-data-valid
-  	setAttributes(this.domElements.types.boolean, {type: "checkbox", class: "jsch-data jsch-data-boolean"}); // TODO: jsch-data-valid
-  	setAttributes(this.domElements.types.array, {class: "jsch-data jsch-data-array"}); // TODO: jsch-data-valid
-  	this.domElements.types.array.jschItems = [];
-  	setAttributes(this.domElements.types.object, {class: "jsch-data jsch-data-object"}); // TODO: jsch-data-valid
-  	this.domElements.types.object.jschProperties = {};
-  	setAttributes(this.domElements.type, {type:"hidden"}); // TODO: jsch-data-valid
-  	
-  	//if(this.schema.id)
-  	
-  	this.getValue = function(){
-  	  if(!this.domElements.type.value) return;
-  	  
-  	  var val = this.domElements.type.value.toLowerCase();
-  	  var rv;
-  		switch(val) {
-    		case "object":
-    		  var obj = this.domElements.types.object.jschProperties;
-    		  var tmp = {};
-    		  for (rv in obj) {
-      		  tmp[rv] = obj[rv].getValue();
-    		  }
-    		  return tmp;
-    		case "array":
-    		  return ["// TODO: implement Arrays"];
-    		case "number":
-    		  return parseFloat(this.domElements.types.number.value);
-    		case "null":
-    		  return null;
-    		case "boolean":
-    		  return this.domElements.types.boolean.checked;
-    		default:
-    		  return this.domElements.types[val] && this.domElements.types[val].value;
-  		}
-  	};
-  	this.setValue = function(val){
-  	  if(val === null) {
-    	  this.domElements.type.value = "null";
-    	  if(this.domElements.root.refresh) this.domElements.root.refresh();
-    	  return 
-  	  }
-  	  var type = typeof val;
-    	switch (type) {
-      	case "string":
-      	  this.domElements.types.string.value = val;
-      	  this.domElements.type.value = "string";
-      	  break;
-      	case "number":
-      	  this.domElements.types.number.value = val;
-      	  this.domElements.type.value = "number";
-      	  break;
-      	case "boolean":
-      	  this.domElements.types.number.checked = val;
-      	  this.domElements.type.value = "boolean";
-      	  break;
-      	case "object":
-    		  var obj = this.domElements.types.object.jschProperties;
-    		  var hash;
-    		  for(hash in val) {
-      		  obj[hash] = new Element({parent:this, value: obj[hash], Jsch: self.Jsch});
-    		  }
-      	  this.domElements.type.value = "object";
-      	  break;
-    	}
-    	if(this.domElements.root.refresh) this.domElements.root.refresh();
-  	};
+    
+    
+    //# constructor
+    
+    // create DOM Elements
+    this.domElements = {
+      root: document.createElement("div"),
+      type: document.createElement("input"),
+      types: {
+        string: document.createElement("input"),
+        number: document.createElement("input"),
+        boolean: document.createElement("input"),
+        //null,
+        array: document.createElement("ol"),
+        object: document.createElement("ul")
+      }
+    };
+    // Configure DOM-Elements
+    setAttributes(this.domElements.root, {class: "jsch-element"}); // TODO: jsch-data-valid
+    setAttributes(this.domElements.types.string, {type: "text", class: "jsch-data jsch-data-string"}); // TODO: jsch-data-valid
+    setAttributes(this.domElements.types.number, {type: "number", class: "jsch-data jsch-data-number"}); // TODO: jsch-data-valid
+    setAttributes(this.domElements.types.boolean, {type: "checkbox", class: "jsch-data jsch-data-boolean"}); // TODO: jsch-data-valid
+    setAttributes(this.domElements.types.array, {class: "jsch-data jsch-data-array"}); // TODO: jsch-data-valid
+    this.domElements.types.array.jschItems = [];
+    setAttributes(this.domElements.types.object, {class: "jsch-data jsch-data-object"}); // TODO: jsch-data-valid
+    this.domElements.types.object.jschProperties = {};
+    setAttributes(this.domElements.type, {type:"hidden"}); // TODO: jsch-data-valid
+    
+    // validations
+    var validate = function(){
+      if(validateString() ) {
+        $(self.domElements.root).addClass("jsch-validation-valid").removeClass("jsch-validation-invalid");
+        return true;
+      }
+      $(self.domElements.root).addClass("jsch-validation-invalid").removeClass("jsch-validation-valid");
+      return false;
+    };
+    var validateString = function(){
+      if(self.domElements.type.value !== "string" && self.getJsonSchema().type !== "string") return true; // not a string at the moment
+      else if (self.getJsonSchema().type === "string") return false; // When type is string this setting is invalid in whole
+      
+      var val = self.domElements.types.string.value;
+      var $root = $(self.domElements.root);
+      var schema = self.getJsonSchema();
+      var isWholeElementValid = true;
+      if(schema.pattern) {
+        if((new RegExp(schema.pattern)).test(val)) $root.addClass("jsch-validation-string-pattern-valid").removeClass("jsch-validation-string-pattern-invalid");
+        else {
+          $root.addClass("jsch-validation-string-pattern-invalid").removeClass("jsch-validation-string-pattern-valid");
+          isWholeElementValid = false;
+        }
+      }
+      if(schema.minLength) {
+        if(val.length>=schema.minLength) $root.addClass("jsch-validation-string-minLength-valid").removeClass("jsch-validation-string-minLength-invalid");
+        else {
+          $root.addClass("jsch-validation-string-minLength-invalid").removeClass("jsch-validation-string-minLength-valid");
+          isWholeElementValid = false;
+        }
+      }
+      if(schema.maxLength) {
+        if(val.length<=schema.maxLength) $root.addClass("jsch-validation-string-maxLength-valid").removeClass("jsch-validation-string-maxLength-invalid");
+        else {
+          $root.addClass("jsch-validation-string-maxLength-invalid").removeClass("jsch-validation-string-maxLength-valid");
+          isWholeElementValid = false;
+        }
+      }
+      if(schema.format) {
+        switch (element.getJsonSchema().format) {
+          case "email":
+            if(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
+            else {
+              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
+                isWholeElementValid = false;
+            }
+            break;
+          case "uri":
+            if(/^[a-z][a-z0-9]*:[a-z0-9.-_\/]*$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
+            else {
+              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
+                isWholeElementValid = false;
+            }
+            break;
+          case "ipv4":
+            if(/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
+            else {
+              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
+                isWholeElementValid = false;
+            }
+            break;
+          case "date-time":
+            if(/^[0-9]{1,4}\-(1[0-2]|0[1-9])\-(3[0-1]|[12][0-9]|0[1-9])T(2[0-4]|[0-1][0-9]):(60|[0-5][0-9]):(60|[0-5][0-9])\.[0-9]{3}Z$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
+            else {
+              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
+                isWholeElementValid = false;
+            }
+            break;
+          case "hostname":
+            if(/^([a-z0-9]*[\.\-_]?[a-z0-9*])+$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
+            else {
+              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
+                isWholeElementValid = false;
+            }
+            break;
+          case "ipv6":
+            if(/^([0-9a-f]{0,4}:){7}[0-9a-f]{0,4}$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
+            else {
+              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
+                isWholeElementValid = false;
+            }
+            break;
+          default:
+            console.log("// TODO: implement the ability to add other formats");
+        }
+        
+      }
+      if(isWholeElementValid) $root.addClass("jsch-validation-string-valid").removeClass("jsch-validation-string-invalid");
+      else $root.addClass("jsch-validation-string-invalid").removeClass("jsch-validation-string-valid");
+      
+      return isWholeElementValid;
+    };
+    
+    var refresh = function(){
+      validate();
+    };
+    
+    $([self.domElements.types.string, self.domElements.types.number, self.domElements.types.boolean]).on("input", validate);
+    $([self.domElements.types.object, self.domElements.types.array]).on("DOMSubtreeModified", validate);
+    
+    this.getValue = function(){
+      if(!this.domElements.type.value) return;
+      
+      var val = this.domElements.type.value.toLowerCase();
+      var rv;
+      switch(val) {
+        case "object":
+          var obj = this.domElements.types.object.jschProperties;
+          var tmp = {};
+          for (rv in obj) {
+            tmp[rv] = obj[rv].getValue();
+          }
+          return tmp;
+        case "array":
+          return ["// TODO: implement Arrays"];
+        case "number":
+          return parseFloat(this.domElements.types.number.value);
+        case "null":
+          return null;
+        case "boolean":
+          return this.domElements.types.boolean.checked;
+        default:
+          return this.domElements.types[val] && this.domElements.types[val].value;
+      }
+    };
+    this.setValue = function(val){
+      if(val === null) {
+        this.domElements.type.value = "null";
+        if(this.domElements.root.refresh) this.domElements.root.refresh();
+        refresh();
+        return 
+      }
+      var type = typeof val;
+      switch (type) {
+        case "string":
+          this.domElements.types.string.value = val;
+          this.domElements.type.value = "string";
+          break;
+        case "number":
+          this.domElements.types.number.value = val;
+          this.domElements.type.value = "number";
+          break;
+        case "boolean":
+          this.domElements.types.number.checked = val;
+          this.domElements.type.value = "boolean";
+          break;
+        case "object":
+          var obj = this.domElements.types.object.jschProperties;
+          var hash;
+          for(hash in val) {
+            obj[hash] = new Element({parent:this, value: obj[hash], Jsch: self.Jsch});
+          }
+          this.domElements.type.value = "object";
+          break;
+      }
+      if(this.domElements.root.refresh) this.domElements.root.refresh();
+      refresh();
+    };
     this.Jsch = opts.Jsch;
-  	this.setSchema = this.setJsonSchema = this.setJSONSchema = function(val){schema = val;};
-  	this.getSchema = this.getJsonSchema = this.getJSONSchema = function(){return schema;};
-  	
-  	defaultView(this);
-  	
-  	
-  	
-  	 
+    this.setSchema = this.setJsonSchema = this.setJSONSchema = function(val){schema = val;};
+    this.getSchema = this.getJsonSchema = this.getJSONSchema = function(){return schema;};
+    
+    defaultView(this);
   };
 
   var Jsch = function(opts){
-  	//# Error handling
-  	//if() throw new Error();
+    //# Error handling
+    //if() throw new Error();
   
-  	//# private constants and variables
-  	var self = this;
-  	var views = {};
+    //# private constants and variables
+    var self = this;
+    var views = {};
   
-  	//# private functions and objects
-  	var jsonSchema = opts.jsonSchema || {};
-  	
+    //# private functions and objects
+    var jsonSchema = opts.jsonSchema || {};
+    
   
-  	//# constructor
-  	this.getJsonSchema = function(){return opts.jsonSchema || {};};
-  	this.getData = function(){
-    	return first.getData();
-  	};
-  	this.setData = function(data){
-    	return first.setData(data);
-  	};
-  	
-  	this.domElements = {
-    	root: document.createElement("div")
-  	};
-  	$(this.domElements.root).addClass("jsch-root");
-  	this.addView = function(id, renderFn){
-    	
-  	};
-  	this.removeView = function(id, renderFn){
-    	
-  	};
-  	this.renderView = function(id,  data ){};
-  	
-  	var first = new Element({Jsch: self});
-  	opts.data = opts.data || null;
-  	first.setValue(opts.data);
-  	this.first = first;
-  	$(this.domElements.root).append(first.domElements.root);
-  	 
+    //# constructor
+    this.getJsonSchema = function(){return opts.jsonSchema || {};};
+    this.getData = function(){
+      return first.getData();
+    };
+    this.setData = function(data){
+      return first.setData(data);
+    };
+    
+    this.domElements = {
+      root: document.createElement("div")
+    };
+    $(this.domElements.root).addClass("jsch-root");
+    this.addView = function(id, renderFn){
+      
+    };
+    this.removeView = function(id, renderFn){
+      
+    };
+    this.renderView = function(id,  data ){};
+    
+    var first = new Element({Jsch: self});
+    opts.data = opts.data || null;
+    first.setValue(opts.data);
+    this.first = first;
+    $(this.domElements.root).append(first.domElements.root);
+     
   };
   
   exports.Jsch = Jsch;
