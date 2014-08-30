@@ -69,6 +69,7 @@
         $(btn.parentNode).addClass("active");
         element.domElements.type.value="null";
         
+        element.revalidate();
         $(doms.typeContent).children().hide().removeClass("active");
         $(content).show();
       });
@@ -128,6 +129,7 @@
         $(btn.parentNode).addClass("active");
         element.domElements.type.value="string";
         
+        element.revalidate();
         $(doms.typeContent).children().hide().removeClass("active");
         $(content).show();
       });
@@ -177,6 +179,7 @@
         $(btn.parentNode).addClass("active");
         element.domElements.type.value="number";
         
+        element.revalidate();
         $(doms.typeContent).children().hide().removeClass("active");
         $(content).show();
       });
@@ -294,6 +297,7 @@
         $(btn.parentNode).addClass("active");
         element.domElements.type.value="object";
         
+        element.revalidate();
         $(doms.typeContent).children().hide().removeClass("active");
         $(content).show();
       });
