@@ -1,0 +1,13 @@
+input.invalid { background-color: #ffaaaa;}
+
+.jsch-element.jsch-validation-string-pattern-invalid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-pattern,
+.jsch-element.jsch-validation-string-maxLength-invalid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-maxLength,
+.jsch-element.jsch-validation-string-minLength-invalid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-minLength,
+.jsch-element.jsch-validation-string-format-invalid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-format,
+
+.jsch-element.jsch-validation-number-multipleOf-invalid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-multipleOf,
+.jsch-element.jsch-validation-number-maximum-invalid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-maximum,
+.jsch-element.jsch-validation-number-minimum-invalid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-minimum
+
+
+{ background-color: #ffaaaa; }
