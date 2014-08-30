@@ -396,16 +396,145 @@ console.log(element.Jsch);
     setAttributes(this.domElements.type, {type:"hidden"}); // TODO: jsch-data-valid
     
     // validations
-    var validate = function(){
-      if(validateString() && validateNumber()) {
-        $(self.domElements.root).addClass("jsch-validation-valid").removeClass("jsch-validation-invalid");
-        status = "valid";
-        return true;
-        
+    this.validations = {
+      number: {
+        multipleOf: function(){
+          if(schema.multipleOf || schema.type.indexOf("integer")>=0) {
+            var val = parseFloat(self.domElements.types.number.value);
+            var mo = schema.multipleOf || 1;
+            while (mo<1) {
+              mo*10;
+              val*10;
+            }
+            return (val % mo === 0);
+          }
+          return true;
+        },
+        minimum: function(){
+          if(schema.minimum) {
+            var val = parseFloat(self.domElements.types.number.value);
+            if(schema.exclusiveMinimum) return val>schema.minimum;
+            else return val>=schema.minimum;
+          }
+          return true;
+        },
+        maximum: function(){
+          if(schema.maximum) {
+            var val = parseFloat(self.domElements.types.number.value);
+            if(schema.exclusiveMaximum) return val<schema.maximum;
+            else return val<=schema.maximum;
+          }
+          return true;
+        }
+      },
+      string: {
+        pattern: function(){
+          if(schema.pattern) {
+            var val = self.domElements.types.string.value;
+            return (new RegExp(schema.pattern)).test(val);
+          }
+          return true;
+        },
+        minLength: function(){
+          if(schema.minLength) {
+            var val = self.domElements.types.string.value;
+            return val.length>=schema.minLength;
+          }
+          return true;
+        },
+        maxLength: function(){
+          if(schema.maxLength) {
+            var val = self.domElements.types.string.value;
+            return val.length<=schema.maxLength;
+          }
+          return true;
+        },
+        format: function(){
+          if(schema.format) {
+            var val = self.domElements.types.string.value;
+            switch (schema.format) {
+              case "email":
+                return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)$/.test(val);
+              case "uri":
+                return /^[a-z][a-z0-9]*:[a-z0-9.-_\/]*$/i.test(val);
+              case "ipv4":
+                return /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/.test(val);
+              case "date-time":
+                return /^[0-9]{1,4}\-(1[0-2]|0[1-9])\-(3[0-1]|[12][0-9]|0[1-9])T(2[0-4]|[0-1][0-9]):(60|[0-5][0-9]):(60|[0-5][0-9])\.[0-9]{3}Z$/.test(val);
+              case "hostname":
+                return /^([a-z0-9]*[\.\-_]?[a-z0-9*])+$/i.test(val);
+              case "ipv6":
+                return /^([0-9a-f]{0,4}:){7}[0-9a-f]{0,4}$/i.test(val);
+            }
+          }
+          return true;
+        },
+      },
+      object: {
+        maxProperties: function(){
+          return true;
+        },
+        minProperties: function(){
+          return true;
+        },
+        required: function(){
+          return true;
+        },
+        properties: function(){ // patternProperties, additional properties
+          return true;
+        },
+        dependencies: function(){
+          return true;
+        },
+      },
+      any: {
+        type: function(){
+          return true;
+        },
+        enum: function(){
+          return true;
+        },
+        allOf: function(){
+          return true;
+        },
+        anyOf: function(){
+          
+        },
+        oneOf: function(){
+          return true;
+        },
+        not: function(){
+          return true;
+        },
+        definitions: function(){
+          return true;
+        }
       }
-      $(self.domElements.root).addClass("jsch-validation-invalid").removeClass("jsch-validation-valid");
-      status = "invalid";
-      return false;
+      
+    };
+    
+    var runValidations = function(type){
+      var validations = self.validations[type]; if(!validations) return true; // unnknown type
+      var hash;
+      var isEverythingValid = true;
+      var $root = $(self.domElements.root);
+      for (hash in validations) {
+        if(validations[hash]()) $root.removeClass("jsch-validation-"+type+"-"+hash+"-invalid").addClass("jsch-validation-"+type+"-"+hash+"-valid");
+        else {
+          $root.removeClass("jsch-validation-"+type+"-"+hash+"-valid").addClass("jsch-validation-"+type+"-"+hash+"-invalid");
+          isEverythingValid = false;
+        }
+      }
+      return isEverythingValid;
+    };
+    
+    var validate = function(){
+      var isWholeElementValid = runValidations(self.domElements.type.value.toLowerCase());
+      
+      if(isWholeElementValid) $(self.domElements.root).removeClass("jsch-validation-invalid").addClass("jsch-validation-valid");
+      else $(self.domElements.root).removeClass("jsch-validation-valid").addClass("jsch-validation-invalid");
+      
+      return isWholeElementValid;      
     };
     var validateString = function(){
       if(self.domElements.type.value !== "string" && self.getJsonSchema().type !== "string") return true; // not a string at the moment
@@ -413,9 +542,8 @@ console.log(element.Jsch);
       
       var val = self.domElements.types.string.value;
       var $root = $(self.domElements.root);
-      var schema = self.getJsonSchema();
       var isWholeElementValid = true;
-      if(schema.pattern) {
+      if(self.validations.string.pattern()) {
         if((new RegExp(schema.pattern)).test(val)) $root.addClass("jsch-validation-string-pattern-valid").removeClass("jsch-validation-string-pattern-invalid");
         else {
           $root.addClass("jsch-validation-string-pattern-invalid").removeClass("jsch-validation-string-pattern-valid");
@@ -542,59 +670,63 @@ console.log(element.Jsch);
           }
         }
       }
-      if(schema.format) {
-        switch (element.getJsonSchema().format) {
-          case "email":
-            if(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "uri":
-            if(/^[a-z][a-z0-9]*:[a-z0-9.-_\/]*$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "ipv4":
-            if(/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "date-time":
-            if(/^[0-9]{1,4}\-(1[0-2]|0[1-9])\-(3[0-1]|[12][0-9]|0[1-9])T(2[0-4]|[0-1][0-9]):(60|[0-5][0-9]):(60|[0-5][0-9])\.[0-9]{3}Z$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "hostname":
-            if(/^([a-z0-9]*[\.\-_]?[a-z0-9*])+$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "ipv6":
-            if(/^([0-9a-f]{0,4}:){7}[0-9a-f]{0,4}$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          default:
-            console.log("// TODO: implement the ability to add other formats");
-        }
-        
-      }
       if(isWholeElementValid) $root.addClass("jsch-validation-number-valid").removeClass("jsch-validation-number-invalid");
       else $root.addClass("jsch-validation-number-invalid").removeClass("jsch-validation-number-valid");
       
       return isWholeElementValid;
+    };
+    var validateObject = function(){
+      if(self.domElements.type.value !== "object" && self.getJsonSchema().type !== "object") return true; // not an object at the moment
+      else if (self.getJsonSchema().type === "object") return false; // When type is object this setting is invalid in whole
+      
+      var val = parseFloat(self.domElements.types.object.jschProperties);
+      var $root = $(self.domElements.root);
+      var schema = self.getJsonSchema();
+      var isWholeElementValid = true;
+      
+      if(schema.required) {
+        var isEverythingRequired = true;
+        var i;
+        for (i=0; i<schema.required.length; i++) {
+          if(!(schema.required[i] in val)) {
+            isEverythingRequired = false;
+            break;
+          }
+        }
+        if(isEverythingRequired) {
+          $root.addClass("jsch-validation-object-required-valid").removeClass("jsch-validation-object-required-invalid");
+        } else {
+          isWholeElementValid = false;
+          $root.addClass("jsch-validation-object-required-invalid").removeClass("jsch-validation-object-required-valid");
+        }
+      }
+      if(schema.maxProperties) {
+        var hash;
+        var i=0;
+        for (hash in val) {
+          i++;
+        }
+        if(schema.maxProperties >= i) {
+          $root.addClass("jsch-validation-object-maxProperties-valid").removeClass("jsch-validation-object-maxProperties-invalid");
+        } else {
+          isWholeElementValid = false;
+          $root.addClass("jsch-validation-object-maxProperties-invalid").removeClass("jsch-validation-object-maxProperties-valid");
+        }
+      }
+      if(schema.minProperties) {
+        var hash;
+        var i=0;
+        for (hash in val) {
+          i++;
+        }
+        if(schema.minProperties <= i) {
+          $root.addClass("jsch-validation-object-minProperties-valid").removeClass("jsch-validation-object-minProperties-invalid");
+        } else {
+          isWholeElementValid = false;
+          $root.addClass("jsch-validation-object-minProperties-invalid").removeClass("jsch-validation-object-minProperties-valid");
+        }
+      }
+      
     };
     
     var refresh = function(){
