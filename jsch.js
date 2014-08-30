@@ -212,7 +212,6 @@
       if(element.domElements.types.object.jschProperties[name]) return;
       if(!validPropertyName(name)) return;
       var subSchema = findSubSchema(name);
-console.log(element.Jsch);
       var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema}); // TODO: remove value
       element.domElements.types.object.jschProperties[name] = tmp;
       var li = document.createElement("li");
@@ -363,7 +362,6 @@ console.log(element.Jsch);
   
     //# private constants and variables
     var schema = opts.jsonSchema || opts.Jsch.getJsonSchema();
-    var status = "valid";
   
     //# private functions and objects
     
@@ -472,43 +470,161 @@ console.log(element.Jsch);
       },
       object: {
         maxProperties: function(){
+          if(schema.maxProperties) {
+            var val = self.domElements.types.object.jschProperties;
+            var hash;
+            var i=0;
+            for (hash in val) {
+              i++;
+            }
+            return schema.maxProperties >= i;
+          }
           return true;
         },
         minProperties: function(){
+          if(schema.minProperties) {
+            var val = self.domElements.types.object.jschProperties;
+            var hash;
+            var i=0;
+            for (hash in val) {
+              i++;
+            }
+            return schema.minProperties <= i;
+          }
           return true;
         },
         required: function(){
+          if(schema.required) {
+            var val = self.domElements.types.object.jschProperties;
+            var isEverythingRequired = true;
+            var i;
+            for (i=0; i<schema.required.length; i++) {
+              if(!(schema.required[i] in val)) {
+                isEverythingRequired = false;
+                break;
+              }
+            }
+            return isEverythingRequired;
+          }
           return true;
         },
         properties: function(){ // patternProperties, additional properties
+          var val = self.domElements.types.object.jschProperties;
+          if(schema.additionalProperties === false) {
+            var i, hash;
+            
+            var patternRegExps = [];
+            var oneOfThem = true;
+            
+            if(schema.patternProperties) {
+              try {
+                for (i=0; i<schema.patternProperties.length; i++) {
+                  patternRegExps.push( new RegExp(schema.patternProperties[i]));
+                }
+              } catch (e) {console.error(e);};
+            }
+            
+            
+            for (hash in val) {
+              if(!hash in schema.properties) {
+                oneOfThem = false;
+                for(i=0; i<patternRegExps; i++) {
+                  if(patternRegExps[i].test(hash)) {
+                    oneOfThem = true;
+                    break;
+                  }
+                }
+                return oneOfThem;
+              }
+            }
+          }
+          else if(typeof schema.additionalProperties === "object") {
+            console.warn("// TODO: Jsch has to handle a JSON schema as additionalProperties");
+          }
           return true;
         },
         dependencies: function(){
+          if(schema.dependencies) {
+            var val = self.domElements.types.object.jschProperties;
+            var hash, i;
+            for (hash in schema.dependencies) {
+              if(hash in val) {
+                for (i=0; i<schema.dependencies[hash]; i++) {
+                  if(!val[schema.dependencies[hash][i]]) return false;
+                }
+              }
+            }
+          }
+          return true;
+        }
+      },
+      array: {
+        items: function(){ // TODO: 
+          if(schema.additionalItems === false) {
+            var val = self.domElements.types.array.jschItems;
+          }
           return true;
         },
+        maxItems: function(){
+          if("maxItems" in schema) {
+            var val = self.domElements.types.array.jschItems;
+            return val.length <= schema.maxItems;
+          }
+          return true;
+        },
+        minItems: function(){
+          if("minItems" in schema) {
+            var val = self.domElements.types.array.jschItems;
+            return val.length >= schema.minItems;
+          }
+          return true;
+        },
+        uniqueItems: : function(){ // TODO: 
+          if(schema.uniqueItems) {
+            var val = self.domElements.types.array.jschItems;
+            
+          }
+          return true;
+        }
       },
       any: {
         type: function(){
+          var val = self.domElements.type.value;
+          if(schema.type) {
+            return schema.type.indexOf(val) >=0;
+          }
           return true;
         },
         enum: function(){
+          if(schema.enum) {
+            var i;
+            var val = self.getValue();
+            var oneOfThem = false;
+            for(i=0; i<schema.enum.length; i++) {
+              if(_.isEqual(schema.enum[i], val)) {
+                oneOfThem = true;
+                break;
+              }
+            }
+            return oneOfThem;
+          }
           return true;
         },
-        allOf: function(){
+        allOf: function(){ // TODO: 
           return true;
         },
-        anyOf: function(){
-          
-        },
-        oneOf: function(){
+        anyOf: function(){ // TODO: 
           return true;
         },
-        not: function(){
+        oneOf: function(){ // TODO: 
           return true;
         },
-        definitions: function(){
+        not: function(){ // TODO: 
           return true;
-        }
+        } //, Definitions are more a feature than a validation...
+        //definitions: function(){
+        //  return true;
+        //}
       }
       
     };
@@ -531,206 +647,16 @@ console.log(element.Jsch);
     var validate = function(){
       var isWholeElementValid = runValidations(self.domElements.type.value.toLowerCase());
       
+      if (!runValidations("any")) isWholeElementValid = false;
+      
       if(isWholeElementValid) $(self.domElements.root).removeClass("jsch-validation-invalid").addClass("jsch-validation-valid");
       else $(self.domElements.root).removeClass("jsch-validation-valid").addClass("jsch-validation-invalid");
       
       return isWholeElementValid;      
     };
-    var validateString = function(){
-      if(self.domElements.type.value !== "string" && self.getJsonSchema().type !== "string") return true; // not a string at the moment
-      else if (self.getJsonSchema().type === "string") return false; // When type is string this setting is invalid in whole
-      
-      var val = self.domElements.types.string.value;
-      var $root = $(self.domElements.root);
-      var isWholeElementValid = true;
-      if(self.validations.string.pattern()) {
-        if((new RegExp(schema.pattern)).test(val)) $root.addClass("jsch-validation-string-pattern-valid").removeClass("jsch-validation-string-pattern-invalid");
-        else {
-          $root.addClass("jsch-validation-string-pattern-invalid").removeClass("jsch-validation-string-pattern-valid");
-          isWholeElementValid = false;
-        }
-      }
-      if(schema.minLength) {
-        if(val.length>=schema.minLength) $root.addClass("jsch-validation-string-minLength-valid").removeClass("jsch-validation-string-minLength-invalid");
-        else {
-          $root.addClass("jsch-validation-string-minLength-invalid").removeClass("jsch-validation-string-minLength-valid");
-          isWholeElementValid = false;
-        }
-      }
-      if(schema.maxLength) {
-        if(val.length<=schema.maxLength) $root.addClass("jsch-validation-string-maxLength-valid").removeClass("jsch-validation-string-maxLength-invalid");
-        else {
-          $root.addClass("jsch-validation-string-maxLength-invalid").removeClass("jsch-validation-string-maxLength-valid");
-          isWholeElementValid = false;
-        }
-      }
-      if(schema.format) {
-        switch (element.getJsonSchema().format) {
-          case "email":
-            if(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "uri":
-            if(/^[a-z][a-z0-9]*:[a-z0-9.-_\/]*$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "ipv4":
-            if(/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "date-time":
-            if(/^[0-9]{1,4}\-(1[0-2]|0[1-9])\-(3[0-1]|[12][0-9]|0[1-9])T(2[0-4]|[0-1][0-9]):(60|[0-5][0-9]):(60|[0-5][0-9])\.[0-9]{3}Z$/.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "hostname":
-            if(/^([a-z0-9]*[\.\-_]?[a-z0-9*])+$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          case "ipv6":
-            if(/^([0-9a-f]{0,4}:){7}[0-9a-f]{0,4}$/i.test(val)) $root.addClass("jsch-validation-string-format-valid").removeClass("jsch-validation-string-format-invalid");
-            else {
-              $root.addClass("jsch-validation-string-format-invalid").removeClass("jsch-validation-string-format-valid");
-                isWholeElementValid = false;
-            }
-            break;
-          default:
-            console.log("// TODO: implement the ability to add other formats");
-        }
-        
-      }
-      if(isWholeElementValid) $root.addClass("jsch-validation-string-valid").removeClass("jsch-validation-string-invalid");
-      else $root.addClass("jsch-validation-string-invalid").removeClass("jsch-validation-string-valid");
-      
-      return isWholeElementValid;
-    };
-    var validateNumber = function(){
-      if(self.domElements.type.value !== "number" && (self.getJsonSchema().type !== "number" || self.getJsonSchema().type !== "integer")) return true; // not a number at the moment
-      else if (self.getJsonSchema().type === "number" || self.getJsonSchema().type === "integer") return false; // When type is string this setting is invalid in whole
-      
-      var val = parseFloat(self.domElements.types.number.value);
-      var $root = $(self.domElements.root);
-      var schema = self.getJsonSchema();
-      var isWholeElementValid = true;
-      
-      if(schema.multipleOf || schema.type.indexOf("integer")>=0) {
-        var mo = schema.multipleOf || 1;
-        var tmp = val;
-        while (mo<1) {
-          mo*10;
-          tmp*10;
-        }
-        if(tmp % mo === 0) $root.addClass("jsch-validation-number-multipleOf-valid").removeClass("jsch-validation-number-multipleOf-invalid");
-        else {
-          $root.addClass("jsch-validation-number-multipleOf-invalid").removeClass("jsch-validation-number-multipleOf-valid");
-          isWholeElementValid = false;
-        }
-      }
-      if(schema.minimum) {
-        if(schema.exclusiveMinimum) {
-          if(val>schema.minimum) $root.addClass("jsch-validation-number-minimum-valid").removeClass("jsch-validation-number-minimum-invalid");
-          else {
-            $root.addClass("jsch-validation-number-minimum-invalid").removeClass("jsch-validation-number-minimum-valid");
-            isWholeElementValid = false;
-          }
-        } else {
-          if(val>=schema.minimum) $root.addClass("jsch-validation-number-minimum-valid").removeClass("jsch-validation-number-minimum-invalid");
-          else {
-            $root.addClass("jsch-validation-number-minimum-invalid").removeClass("jsch-validation-number-minimum-valid");
-            isWholeElementValid = false;
-          }
-        }
-      }
-      if(schema.maximum) {
-        if(schema.exclusiveMaximum) {
-          if(val<schema.maximum) $root.addClass("jsch-validation-number-maximum-valid").removeClass("jsch-validation-number-maximum-invalid");
-          else {
-            $root.addClass("jsch-validation-number-maximum-invalid").removeClass("jsch-validation-number-maximum-valid");
-            isWholeElementValid = false;
-          }
-        } else {
-          if(val<=schema.maximum) $root.addClass("jsch-validation-number-maximum-valid").removeClass("jsch-validation-number-maximum-invalid");
-          else {
-            $root.addClass("jsch-validation-number-maximum-invalid").removeClass("jsch-validation-number-maximum-valid");
-            isWholeElementValid = false;
-          }
-        }
-      }
-      if(isWholeElementValid) $root.addClass("jsch-validation-number-valid").removeClass("jsch-validation-number-invalid");
-      else $root.addClass("jsch-validation-number-invalid").removeClass("jsch-validation-number-valid");
-      
-      return isWholeElementValid;
-    };
-    var validateObject = function(){
-      if(self.domElements.type.value !== "object" && self.getJsonSchema().type !== "object") return true; // not an object at the moment
-      else if (self.getJsonSchema().type === "object") return false; // When type is object this setting is invalid in whole
-      
-      var val = parseFloat(self.domElements.types.object.jschProperties);
-      var $root = $(self.domElements.root);
-      var schema = self.getJsonSchema();
-      var isWholeElementValid = true;
-      
-      if(schema.required) {
-        var isEverythingRequired = true;
-        var i;
-        for (i=0; i<schema.required.length; i++) {
-          if(!(schema.required[i] in val)) {
-            isEverythingRequired = false;
-            break;
-          }
-        }
-        if(isEverythingRequired) {
-          $root.addClass("jsch-validation-object-required-valid").removeClass("jsch-validation-object-required-invalid");
-        } else {
-          isWholeElementValid = false;
-          $root.addClass("jsch-validation-object-required-invalid").removeClass("jsch-validation-object-required-valid");
-        }
-      }
-      if(schema.maxProperties) {
-        var hash;
-        var i=0;
-        for (hash in val) {
-          i++;
-        }
-        if(schema.maxProperties >= i) {
-          $root.addClass("jsch-validation-object-maxProperties-valid").removeClass("jsch-validation-object-maxProperties-invalid");
-        } else {
-          isWholeElementValid = false;
-          $root.addClass("jsch-validation-object-maxProperties-invalid").removeClass("jsch-validation-object-maxProperties-valid");
-        }
-      }
-      if(schema.minProperties) {
-        var hash;
-        var i=0;
-        for (hash in val) {
-          i++;
-        }
-        if(schema.minProperties <= i) {
-          $root.addClass("jsch-validation-object-minProperties-valid").removeClass("jsch-validation-object-minProperties-invalid");
-        } else {
-          isWholeElementValid = false;
-          $root.addClass("jsch-validation-object-minProperties-invalid").removeClass("jsch-validation-object-minProperties-valid");
-        }
-      }
-      
-    };
-    
     var refresh = function(){
-      validate();
+      if(this.domElements.root.refresh) this.domElements.root.refresh();
+      setTimeout(validate, 0); // let us validate in async mode...
     };
     
     $([self.domElements.types.string, self.domElements.types.number, self.domElements.types.boolean]).on("input", validate);
@@ -791,15 +717,17 @@ console.log(element.Jsch);
           this.domElements.type.value = "object";
           break;
       }
-      if(this.domElements.root.refresh) this.domElements.root.refresh();
       refresh();
     };
     this.Jsch = opts.Jsch;
     this.setSchema = this.setJsonSchema = this.setJSONSchema = function(val){schema = val;};
     this.getSchema = this.getJsonSchema = this.getJSONSchema = function(){return schema;};
     this.getStatus = function(){
+      if(!validate()) return "invalide"; 
       // enum: valid, invalid, sub-invalid
-      return status;
+      // TODO: sub-invalid
+      
+      return "valide";
     }
     
     defaultView(this);
