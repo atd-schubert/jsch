@@ -579,7 +579,7 @@
           }
           return true;
         },
-        uniqueItems: : function(){ // TODO: 
+        uniqueItems: function(){ // TODO: 
           if(schema.uniqueItems) {
             var val = self.domElements.types.array.jschItems;
             
@@ -610,16 +610,42 @@
           }
           return true;
         },
-        allOf: function(){ // TODO: 
+        allOf: function(){ // TODO: test
+          if(schema.allOf) {
+            var i;
+            for (i=0; i<schema.allOf.length; i++) {
+              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.allOf[i] })).getStatus() !== "valid") return false;
+            }
+          }
           return true;
         },
-        anyOf: function(){ // TODO: 
+        anyOf: function(){ // TODO: test
+          if(schema.anyOf) {
+            var i;
+            for (i=0; i<schema.anyOf.length; i++) {
+              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.anyOf[i] })).getStatus() === "valid") return true;
+            }
+            return false
+          }
           return true;
         },
-        oneOf: function(){ // TODO: 
+        oneOf: function(){ // TODO:  test
+          if(schema.oneOf) {
+            var i, n=0;
+            for (i=0; i<schema.oneOf.length; i++) {
+              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.oneOf[i] })).getStatus() === "valid") n++;
+            }
+            return n === 1;
+          }
           return true;
         },
-        not: function(){ // TODO: 
+        not: function(){ // TODO: test 
+          if(schema.not) {
+            var i;
+            for (i=0; i<schema.not.length; i++) {
+              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.not[i] })).getStatus() === "valid") return false;
+            }
+          }
           return true;
         } //, Definitions are more a feature than a validation...
         //definitions: function(){
@@ -655,7 +681,7 @@
       return isWholeElementValid;      
     };
     var refresh = function(){
-      if(this.domElements.root.refresh) this.domElements.root.refresh();
+      if(self.domElements.root.refresh) self.domElements.root.refresh();
       setTimeout(validate, 0); // let us validate in async mode...
     };
     
@@ -722,12 +748,13 @@
     this.Jsch = opts.Jsch;
     this.setSchema = this.setJsonSchema = this.setJSONSchema = function(val){schema = val;};
     this.getSchema = this.getJsonSchema = this.getJSONSchema = function(){return schema;};
+    this.revalidate = function(){validate();};
     this.getStatus = function(){
-      if(!validate()) return "invalide"; 
+      if(!validate()) return "invalid"; 
       // enum: valid, invalid, sub-invalid
       // TODO: sub-invalid
       
-      return "valide";
+      return "valid";
     }
     
     defaultView(this);
