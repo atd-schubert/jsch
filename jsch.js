@@ -78,6 +78,33 @@
     }
     $(doms.typeContent).append(content);
   };
+  var createBoolean = function(doms, element){
+    var elem = element.domElements.types.boolean;
+    var btn = document.createElement("a");
+    var $btn = $(btn);
+    var content = document.createElement("div");
+    
+    $(content).addClass("tab-pane jsch-type jsch-type-boolean").append('<h4>Boolean value</h4>', elem);
+    
+    $btn.text("Boolean");
+    if(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("boolean")>=0) {
+    
+      $(doms.typeList).append($(document.createElement("li")).append(btn));
+    
+      $btn.on("click", function(){
+        $(doms.typeList).children().removeClass("active");
+        $(btn.parentNode).addClass("active");
+        element.domElements.type.value="boolean";
+        
+        element.revalidate();
+        $(doms.typeContent).children().hide().removeClass("active");
+        $(content).show();
+      });
+    } else {
+      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn));
+    }
+    $(doms.typeContent).append(content);
+  };
   var createString = function(doms, element){
     var elem = element.domElements.types.string;
 
@@ -353,6 +380,7 @@
     createObject(elements, elem);
     createString(elements, elem);
     createNumber(elements, elem);
+    createBoolean(elements, elem);
     createNull(elements, elem);
     
     $root.append($body);
