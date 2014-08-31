@@ -40,6 +40,38 @@ $(document).ready(function(){
         title: "The SUB-Schema",
         description:"A sub schema",
         type:["string", "object"]
+      },
+      email:{
+        id:"http://atd-schubert.com/email",
+        title: "E-Mail validation",
+        description:"A validation with format email",
+        format: "email",
+        default: "ich@was.de",
+        type:"string"
+      },
+      hostname:{
+        id:"http://atd-schubert.com/hostname",
+        title: "Hostname validation",
+        description:"A validation with format hostname",
+        format: "hostname",
+        default: "google.com",
+        type:"string"
+      },
+      ipv4:{
+        id:"http://atd-schubert.com/ipv4",
+        title: "Hostname validation",
+        description:"A validation with format ip",
+        format: "ipv4",
+        default: "192.168.1.1",
+        type:"string"
+      },
+      ipv6:{
+        id:"http://atd-schubert.com/ipv6",
+        title: "Hostname validation",
+        description:"A validation with format ipv6",
+        format: "ipv6",
+        default: "2001:db8:0:0:0:0:2:1",
+        type:"string"
       }
     }
   };

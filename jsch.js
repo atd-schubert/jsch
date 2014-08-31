@@ -781,6 +781,7 @@ var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"htt
   
     //# private functions and objects
     var jsonSchema = opts.jsonSchema || {};
+    Jsch.addToDictionary(jsonSchema);
     
   
     //# constructor
@@ -817,7 +818,60 @@ var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"htt
       if(schema.id.substr(-1)!== "#") schema.id += "#";
       Jsch.dictionary[schema.id] = schema;
     }
-    // TODO: crawl the whole object...
+    if(schema.definitions) {
+      var hash;
+      for (hash in schema.definitions) {
+        Jsch.addToDictionary(schema.definitions[hash]);
+      }
+    }
+    if(schema.properties) {
+      var hash;
+      for (hash in schema.properties) {
+        Jsch.addToDictionary(schema.properties[hash]);
+      }
+    }
+    if(schema.patternProperties) {
+      var hash;
+      for (hash in schema.patternProperties) {
+        Jsch.addToDictionary(schema.patternProperties[hash]);
+      }
+    }
+    if(schema.additionalProperties) {
+      var hash;
+      for (hash in schema.additionalProperties) {
+        Jsch.addToDictionary(schema.additionalProperties[hash]);
+      }
+    }
+    if(schema.items) {
+      var hash;
+      for (hash in schema.patternProperties) {
+        Jsch.addToDictionary(schema.patternProperties[hash]);
+      }
+    }
+    if(schema.allOf) {
+      var i;
+      for (i=0; i<schema.allOf.length; i++) {
+        Jsch.addToDictionary(schema.allOf[i]);
+      }
+    }
+    if(schema.anyOf) {
+      var i;
+      for (i=0; i<schema.anyOf.length; i++) {
+        Jsch.addToDictionary(schema.anyOf[i]);
+      }
+    }
+    if(schema.oneOf) {
+      var i;
+      for (i=0; i<schema.oneOf.length; i++) {
+        Jsch.addToDictionary(schema.oneOf[i]);
+      }
+    }
+    if(schema.not) {
+      var i;
+      for (i=0; i<schema.not.length; i++) {
+        Jsch.addToDictionary(schema.not[i]);
+      }
+    }
   };
   Jsch.getSchemaFromDictionary = function(url, base){
     var resolve = function(base, path){
@@ -832,19 +886,19 @@ var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"htt
     };
     if(url.substr(0, 1) === "#") {
       if(!base) throw new Error("Can't resolve relative schema without base");
-      var path = url.split("#")[1];
+      var path = url.split("#")[1] || "";
       return resolve(base, path);
     }
     if(url.substr(0, 1) === "/") {
       if(!base) throw new Error("Can't resolve relative schema without base");
       
-      var path = url.split("#")[1];
+      var path = url.split("#")[1] || "";
       return resolve(base, path);
     }
     
     if(/^(https?|s?ftp):\/\//.test(url)) {
       var mainSchema = Jsch.dictionary[url.split("#")[0]+"#"];
-      var path = url.split("#")[1];
+      var path = url.split("#")[1] || "";
       return resolve(mainSchema, path);
       
     }
