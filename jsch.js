@@ -727,6 +727,9 @@
       if(isWholeElementValid) $(self.domElements.root).removeClass("jsch-validation-invalid").addClass("jsch-validation-valid");
       else $(self.domElements.root).removeClass("jsch-validation-valid").addClass("jsch-validation-invalid");
       
+      var parent = self.getParent();
+      self.checkSubValidity();
+      
       return isWholeElementValid;      
     };
     var refresh = function(){
@@ -802,8 +805,18 @@
       if(!validate()) return "invalid"; 
       // enum: valid, invalid, sub-invalid
       // TODO: sub-invalid
-      
+      if(!checkSubValidity) return "sub-invalid";
       return "valid";
+    };
+    this.checkSubValidity = function() {
+      var $root = $(self.domElements.root);
+      if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) {
+        $root.addClass("jsch-validation-subinvalid");
+      }
+      else $root.removeClass("jsch-validation-subinvalid");
+      
+      var parent = self.getParent()
+      if(parent) parent.checkSubValidity();
     }
     
     defaultView(this);
