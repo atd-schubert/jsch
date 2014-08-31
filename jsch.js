@@ -817,7 +817,7 @@
       
       var parent = self.getParent()
       if(parent) parent.checkSubValidity();
-    }
+    };
     
     defaultView(this);
     
