@@ -446,7 +446,7 @@
     this.validations = {
       number: {
         multipleOf: function(){
-          if(schema.multipleOf || schema.type.indexOf("integer")>=0) {
+          if(schema.multipleOf || schema.type && schema.type.indexOf("integer")>=0) {
             var val = parseFloat(self.domElements.types.number.value);
             var mo = schema.multipleOf || 1;
             while (mo<1) {
