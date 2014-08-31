@@ -372,6 +372,192 @@
     }
     $(doms.typeContent).append(content);
   };
+  var createArray = function(doms, element){ ///////////////////////////////////////////////////////////////////////////////
+    var findSubSchema = function(pos){
+      var oldSchema = element.getJsonSchema();
+      if(oldSchema.items && oldSchema.items[pos]) return oldSchema.properties[pos];
+      
+      if(typeof oldSchema.additionalItems === "object") return oldSchema.additionalItems;
+      
+      return {};
+    };
+    
+    var addSubElement = function(value){
+      var subSchema = findSubSchema(elem.jschItems.length);
+      if(value === undefined) value = subSchema.default;
+      var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema});
+      
+      elem.jschItems.push(tmp);
+      
+      var li = document.createElement("li");
+      
+      var inputGroup = document.createElement("div");
+      inputGroup.setAttribute("class", "input-group");
+      
+      var removeBtn = createAddon("remove");
+      $(removeBtn)
+        //.text("remove")
+        .addClass("label-danger")
+        .on("click", function(){
+          removeSubElement(tmp); // TODO: make removeSubElement first
+        });
+      
+      var collapseBtn = createAddon("collapse");
+      var $collapseBtn = $(collapseBtn);
+      
+      $collapseBtn.on("click", function(){
+        if($collapseBtn.text() === "collapse") {
+          $collapseBtn.text("expand");
+          $(tmp.domElements.root).hide();
+        } else {
+          $collapseBtn.text("collapse");
+          $(tmp.domElements.root).show();
+        }
+      });
+      
+      var moveUpBtn = createAddon("&#8593;");
+      var moveDownBtn = createAddon("&#8595;");
+      
+      var $moveUpBtn = $(moveUpBtn);
+      var $moveDownBtn = $(moveDownBtn);
+      
+      $moveUpBtn.on("click", function(){
+        console.log("// TODO: up...");
+      });
+      $moveDownBtn.on("click", function(){
+        console.log("// TODO: down...");
+      });
+      
+      $(inputGroup).append(collapseBtn, moveUpBtn, moveDownBtn, removeBtn);
+      
+      
+      $(li).append(inputGroup, tmp.domElements.root);
+      
+      $elem.append(li);
+      element.revalidate();
+      
+      
+      
+      
+      
+      return;
+      
+      /*
+      if(element.domElements.types.array.jschItems[name]) return;
+      if(!validPropertyName(name)) return;
+      var subSchema = findSubSchema(name);
+      if(subSchema.$ref) subSchema = Jsch.getSchemaFromDictionary(, element.getBase());
+      if(value === undefined) value = subSchema.default;
+      
+      var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema}); // TODO: remove value
+      element.domElements.types.object.jschProperties[name] = tmp;
+      
+      var li = document.createElement("li");
+      var inputGroup = document.createElement("div");
+      inputGroup.setAttribute("class", "input-group");
+      
+      var title = document.createElement("input");
+      var $title = $(title);
+      title.setAttribute("type", "text");
+      title.setAttribute("disabled", "disabled");
+      title.value = name;
+      $title.addClass("form-control");
+      $title.addClass("form-control");
+      
+      var removeBtn = createAddon("remove");
+      $(removeBtn)
+        //.text("remove")
+        .addClass("label-danger")
+        .on("click", function(){
+          removeSubElement(name);
+        });
+      
+      var collapseBtn = createAddon("collapse");
+      var $collapseBtn = $(collapseBtn);
+      
+      $collapseBtn.on("click", function(){
+        if($collapseBtn.text() === "collapse") {
+          $collapseBtn.text("expand");
+          $(tmp.domElements.root).hide();
+        } else {
+          $collapseBtn.text("collapse");
+          $(tmp.domElements.root).show();
+        }
+      })
+/// ACHTUNG dis aus object löschen!!! $(title).on("click", function(){$([tmp.domElements.root]).toggle()});
+      
+      $(inputGroup).append(title, collapseBtn, removeBtn);
+      $(li).append(inputGroup, tmp.domElements.root);
+      
+      $elem.append(li);
+      element.revalidate();
+      
+    */};
+    var removeSubElement = function(elem){
+      var i;
+      var items = element.domElements.types.array.jschItems;
+        console.log(items, elem)
+      for (i=0; i<items.length; i++) {
+        console.log(items, elem, items[i]===elem)
+        if(items[i]===elem) {
+          element.domElements.types.array.removeChild(element.domElements.types.array.children[i]);
+          items.splice(i, 1);
+        }
+      }
+      element.revalidate();
+    };
+    
+    var elem = element.domElements.types.array;
+    var $elem = $(elem);
+    var btn = document.createElement("a");
+    var content = document.createElement("div");
+    var inputGroup;
+    var schema = element.getJsonSchema();
+    
+    var $content = $(content).addClass("tab-pane jsch-type jsch-type-array");
+    inputGroup = document.createElement("div");
+    inputGroup.setAttribute("class", "input-group");
+    if(schema.minItems) inputGroup.appendChild(createAddon("n &ge; "+schema.minItems, "array-minItems"));
+    if(schema.maxItems) inputGroup.appendChild(createAddon("n &le; "+schema.maxItems, "array-maxItems"));
+    if(schema.uniqueItems) inputGroup.appendChild(createAddon("unique", "array-uniqueItems"));
+    // ? if(schema.items) inputGroup.appendChild(createAddon("structure", "array-items"));
+    
+    if(inputGroup.hasChildNodes()) {
+      $(content).append('<h4>Array validations</h4>', inputGroup);
+    }
+    
+    
+    $(content).append('<h4>Append new property</h4>');
+    
+    var createItemBtn = document.createElement("button");
+    $(createItemBtn)
+      .text("append")
+      .addClass("form-control")
+      .on("click", function(){addSubElement()});
+    
+    
+    $(content).append([createItemBtn, elem]);
+    
+    var $btn = $(btn);
+    $btn.text("Array");
+    if(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("array")>=0) {
+    
+      $(doms.typeList).append($(document.createElement("li")).append(btn));
+    
+      $btn.on("click", function(){
+        $(doms.typeList).children().removeClass("active");
+        $(btn.parentNode).addClass("active");
+        element.domElements.type.value="array";
+        
+        element.revalidate();
+        $(doms.typeContent).children().hide().removeClass("active");
+        $(content).show();
+      });
+    } else {
+      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn));
+    }
+    $(doms.typeContent).append(content);
+  };
   
   
   var defaultView = function(elem) {
@@ -431,6 +617,7 @@
     $body.append($(elements.typeContent = document.createElement("div")).addClass("tab-content jsch-types-content"));
     
     createObject(elements, elem);
+    createArray(elements, elem);
     createString(elements, elem);
     createNumber(elements, elem);
     createBoolean(elements, elem);
@@ -681,10 +868,12 @@
           }
           return true;
         },
-        uniqueItems: function(){ // TODO: 
+        uniqueItems: function(){
           if(schema.uniqueItems) {
-            var val = self.domElements.types.array.jschItems;
-            
+            var val = self.getValue();
+            if(Array.prototype.isPrototypeOf(val)) {
+              return val.length === _.uniq(val).length;
+            }
           }
           return true;
         }
@@ -810,7 +999,12 @@
           }
           return tmp;
         case "array":
-          return ["// TODO: implement Arrays"];
+          var arr = this.domElements.types.array.jschItems;
+          var tmp = [];
+          for(rv=0; rv<arr.length; rv++) {
+            tmp.push(arr[rv].getValue());
+          }
+          return tmp;
         case "number":
           return parseFloat(this.domElements.types.number.value);
         case "null":
@@ -870,6 +1064,10 @@
       var $root = $(self.domElements.root);
       if(self.domElements.type.value !== "array" && self.domElements.type.value !== "object") bool = true;
       else if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) bool = false;
+      
+      if(self.domElements.type.value === "array" && !self.validations.array.uniqueItems()) {
+        setTimeout(validate, 1);
+      }
       
       if(bool) $root.removeClass("jsch-validation-subinvalid");
       else $root.addClass("jsch-validation-subinvalid");      
