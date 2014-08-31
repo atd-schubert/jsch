@@ -805,18 +805,20 @@
       if(!validate()) return "invalid"; 
       // enum: valid, invalid, sub-invalid
       // TODO: sub-invalid
-      if(!checkSubValidity) return "sub-invalid";
+      if(!self.checkSubValidity()) return "sub-invalid";
       return "valid";
     };
     this.checkSubValidity = function() {
+      var parent = self.getParent();
+      var bool = true;
       var $root = $(self.domElements.root);
-      if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) {
-        $root.addClass("jsch-validation-subinvalid");
-      }
-      else $root.removeClass("jsch-validation-subinvalid");
+      if(self.domElements.type.value !== "array" && self.domElements.type.value !== "object") bool = true;
+      else if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) bool = false;
       
-      var parent = self.getParent()
+      if(bool) $root.removeClass("jsch-validation-subinvalid");
+      else $root.addClass("jsch-validation-subinvalid");      
       if(parent) parent.checkSubValidity();
+      return bool;
     };
     
     defaultView(this);
