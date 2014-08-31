@@ -300,11 +300,24 @@
     var $elem = $(elem);
     var btn = document.createElement("a");
     var content = document.createElement("div");
+    var inputGroup;
+    var schema = element.getJsonSchema();
     
-    $(content).addClass("tab-pane jsch-type jsch-type-object").append('<h4>Object Infos</h4>');
+    var $content = $(content).addClass("tab-pane jsch-type jsch-type-object");
+    inputGroup = document.createElement("div");
+    inputGroup.setAttribute("class", "input-group");
+    if(schema.maxProperties) inputGroup.appendChild(createAddon("n &le; "+schema.maxProperties, "object-maxProperties"));
+    if(schema.minProperties) inputGroup.appendChild(createAddon("n &ge; "+schema.minProperties, "object-minProperties"));
+    if(schema.required) inputGroup.appendChild(createAddon("required", "object-required"));
+    if(schema.properties || schema.patternProperties) inputGroup.appendChild(createAddon("properties", "object-properties"));
+    
+    if(inputGroup.hasChildNodes()) {
+      $(content).append('<h4>Object validations</h4>', inputGroup);
+    }
+    
     
     $(content).append('<h4>Create new property</h4>');
-    var inputGroup = document.createElement("div");
+    inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
     
     if(element.getJsonSchema().patternProperties) inputGroup.appendChild(createAddon("RegExpr"));

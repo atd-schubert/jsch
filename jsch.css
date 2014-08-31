@@ -13,7 +13,12 @@ input.invalid { background-color: #ffaaaa;}
 .jsch-element.jsch-validation-any-anyOf-invalid > .panel-heading > .input-group .jsch-validation-out-any-anyOf,
 .jsch-element.jsch-validation-any-allOf-invalid > .panel-heading > .input-group .jsch-validation-out-any-allOf,
 .jsch-element.jsch-validation-any-oneOf-invalid > .panel-heading > .input-group .jsch-validation-out-any-oneOf,
-.jsch-element.jsch-validation-any-not-invalid > .panel-heading > .input-group .jsch-validation-out-any-not
+.jsch-element.jsch-validation-any-not-invalid > .panel-heading > .input-group .jsch-validation-out-any-not,
+
+.jsch-element.jsch-validation-object-maxProperties-invalid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-maxProperties,
+.jsch-element.jsch-validation-object-minProperties-invalid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-minProperties,
+.jsch-element.jsch-validation-object-properties-invalid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-properties,
+.jsch-element.jsch-validation-object-required-invalid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-required
 
 { background-color: #ffaaaa; }
 
