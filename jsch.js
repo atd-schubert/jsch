@@ -9,6 +9,10 @@
   
 */
 
+// temp
+var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"http://json-schema.org/draft-04/hyper-schema#",title:"JSON Hyper-Schema",allOf:[{$ref:"http://json-schema.org/draft-04/schema#"}],properties:{additionalItems:{anyOf:[{type:"boolean"},{$ref:"#"}]},additionalProperties:{anyOf:[{type:"boolean"},{$ref:"#"}]},dependencies:{additionalProperties:{anyOf:[{$ref:"#"},{type:"array"}]}},items:{anyOf:[{$ref:"#"},{$ref:"#/definitions/schemaArray"}]},definitions:{additionalProperties:{$ref:"#"}},patternProperties:{additionalProperties:{$ref:"#"}},properties:{additionalProperties:{$ref:"#"}},allOf:{$ref:"#/definitions/schemaArray"},anyOf:{$ref:"#/definitions/schemaArray"},oneOf:{$ref:"#/definitions/schemaArray"},not:{$ref:"#"},links:{type:"array",items:{$ref:"#/definitions/linkDescription"}},fragmentResolution:{type:"string"},media:{type:"object",properties:{type:{description:"A media type, as described in RFC 2046",type:"string"},binaryEncoding:{description:"A content encoding scheme, as described in RFC 2045",type:"string"}}},pathStart:{description:"Instances' URIs must start with this value for this schema to apply to them",type:"string",format:"uri"}},definitions:{schemaArray:{type:"array",items:{$ref:"#"}},linkDescription:{title:"Link Description Object",type:"object",required:["href","rel"],properties:{href:{description:"a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",type:"string"},rel:{description:"relation to the target resource of the link",type:"string"},title:{description:"a title for the link",type:"string"},targetSchema:{description:"JSON Schema describing the link target",$ref:"#"},mediaType:{description:"media type (as defined by RFC 2046) describing the link target",type:"string"},method:{description:'method for requesting the target of the link (e.g. for HTTP this might be "GET" or "DELETE")',type:"string"},encType:{description:"The media type in which to submit data along with the request",type:"string","default":"application/json"},schema:{description:"Schema describing the data to submit along with the request",$ref:"#"}}}},links:[{rel:"self",href:"{+id}"},{rel:"full",href:"{+($ref)}"}]};
+// temp end
+
 (function(exports){
   var INVALIDCOLOR = "#ffaaaa";
   
@@ -804,6 +808,47 @@
     $(this.domElements.root).append(first.domElements.root);
      
   };
+  Jsch.dictionary = {};
+  Jsch.addToDictionary = function(schema){
+    if(schema.id) {
+      if(schema.id.substr(-1)!== "#") schema.id += "#";
+      Jsch.dictionary[schema.id] = schema;
+    }
+    // TODO: crawl the whole object...
+  };
+  Jsch.getSchemaFromDictionary = function(url, base){
+    var resolve = function(base, path){
+      var i;
+      if(typeof path === "string") path = path.split("/");
+      
+      for (i=0; i<path.length; i++) {
+        if(path[i]!== "") base = base[path[i]];
+        if(!base) return base;
+      }
+      return base;
+    };
+    if(url.substr(0, 1) === "#") {
+      if(!base) throw new Error("Can't resolve relative schema without base");
+      var path = url.split("#")[1];
+      return resolve(base, path);
+    }
+    if(url.substr(0, 1) === "/") {
+      if(!base) throw new Error("Can't resolve relative schema without base");
+      
+      var path = url.split("#")[1];
+      return resolve(base, path);
+    }
+    
+    if(/^(https?|s?ftp):\/\//.test(url)) {
+      var mainSchema = Jsch.dictionary[url.split("#")[0]+"#"];
+      var path = url.split("#")[1];
+      return resolve(mainSchema, path);
+      
+    }
+    return false;
+  };
+  
+  Jsch.addToDictionary(hyperSchema);
   
   exports.Jsch = Jsch;
 })(window);
