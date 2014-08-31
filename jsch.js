@@ -395,23 +395,22 @@
     var $header = $(elements.panelHeader = document.createElement("div")).addClass("panel-heading");
     
       // id
-    $header.append($(document.createElement("h5")).attr("style", "float:right;").append($(elements.schemaId = document.createElement("span")).text(schema.id || "(none)")));
+    $header.append($(document.createElement("h5")).attr("style", "float:right;").append($(elements.schemaId = document.createElement("span")).text(schema.id || ""))); // "(none)" // TODO: get absolute+relative url
     
       // title
     elements.title = document.createElement('h3');
     if(schema.title) $header.append($(elements.title).text(schema.title));
     
-      // description
+    // description
     elements.description = document.createElement("p");
     if(schema.description) $header.append($(elements.description).text(schema.description));
     $(elements.schemaId = document.createElement("h5")).addClass("panel-heading");
-    // TODO: Validations!
     
-    $header.append($(document.createElement('h4')).text("Validations"));
+    // validations
     elements.validationInputGroup = document.createElement("div");
     elements.validationInputGroup.setAttribute("class", "input-group");
     
-    var $inputGroup = $(elements.validationInputGroup); ////////////////////////////////////////////////////////////////////////////////////////
+    var $inputGroup = $(elements.validationInputGroup);
     
     if("type" in schema) $inputGroup.append(createAddon("type", "any-type"));
     if("enum" in schema) $inputGroup.append(createAddon("enum", "any-enum"));
@@ -420,7 +419,10 @@
     if("oneOf" in schema) $inputGroup.append(createAddon("oneOf", "any-oneOf"));
     if("not" in schema) $inputGroup.append(createAddon("not", "any-not"));
     
-    $header.append($inputGroup);
+    if(elements.validationInputGroup.hasChildNodes()) {
+      $header.append("<h4>Validations</h4>", $inputGroup);
+    }
+    
     $root.append($header);
     
     // Body
