@@ -219,6 +219,7 @@ var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"htt
       if(element.domElements.types.object.jschProperties[name]) return;
       if(!validPropertyName(name)) return;
       var subSchema = findSubSchema(name);
+      if(value === undefined) value = subSchema.default;
       var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema}); // TODO: remove value
       element.domElements.types.object.jschProperties[name] = tmp;
       var li = document.createElement("li");
@@ -766,6 +767,8 @@ var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"htt
     }
     
     defaultView(this);
+    
+    if(opts && "value" in opts) this.setValue(opts.value);
   };
 
   var Jsch = function(opts){
