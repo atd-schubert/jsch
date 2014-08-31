@@ -460,15 +460,15 @@ var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"htt
             var val = self.domElements.types.string.value;
             switch (schema.format) {
               case "email":
-                return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)$/.test(val);
+                return /^[a-z0-9]+([\.\-_]?[a-z0-9]+)*@[a-z0-9]+([\.\-_]?[a-z0-9]+)*$/i.test(val);
               case "uri":
-                return /^[a-z][a-z0-9]*:[a-z0-9.-_\/]*$/i.test(val);
+                return /^[a-z][a-z0-9]*:[a-z0-9\.\-\_\/]*$/i.test(val);
               case "ipv4":
                 return /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/.test(val);
               case "date-time":
                 return /^[0-9]{1,4}\-(1[0-2]|0[1-9])\-(3[0-1]|[12][0-9]|0[1-9])T(2[0-4]|[0-1][0-9]):(60|[0-5][0-9]):(60|[0-5][0-9])\.[0-9]{3}Z$/.test(val);
               case "hostname":
-                return /^([a-z0-9]*[\.\-_]?[a-z0-9*])+$/i.test(val);
+                return /^[a-z0-9]+([\.\-_]?[a-z0-9]+)*$/i.test(val);
               case "ipv6":
                 return /^([0-9a-f]{0,4}:){7}[0-9a-f]{0,4}$/i.test(val);
             }
