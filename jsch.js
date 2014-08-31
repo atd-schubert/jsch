@@ -818,6 +818,7 @@ var hyperSchema={$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"htt
       if(schema.id.substr(-1)!== "#") schema.id += "#";
       Jsch.dictionary[schema.id] = schema;
     }
+    // crawling sub schemas
     if(schema.definitions) {
       var hash;
       for (hash in schema.definitions) {
