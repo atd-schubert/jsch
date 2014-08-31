@@ -244,31 +244,55 @@
       var subSchema = findSubSchema(name);
       if(subSchema.$ref) subSchema = Jsch.getSchemaFromDictionary(subSchema.$ref, element.getBase());
       if(value === undefined) value = subSchema.default;
+      
       var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema}); // TODO: remove value
       element.domElements.types.object.jschProperties[name] = tmp;
+      
       var li = document.createElement("li");
-      var title = document.createElement("h5");
-      var removeBtn = document.createElement("button");
+      var inputGroup = document.createElement("div");
+      inputGroup.setAttribute("class", "input-group");
+      
+      var title = document.createElement("input");
+      var $title = $(title);
+      title.setAttribute("type", "text");
+      title.setAttribute("disabled", "disabled");
+      title.value = name;
+      $title.addClass("form-control");
+      $title.addClass("form-control");
+      
+      var removeBtn = createAddon("remove");
       $(removeBtn)
-        .text("remove")
-        .addClass("btn btn-danger")
+        //.text("remove")
+        .addClass("label-danger")
         .on("click", function(){
           removeSubElement(name);
         });
       
-      var hidden = document.createElement("span");
-      $(hidden).text("collapsed").addClass("label label-default").hide();
+      var collapseBtn = createAddon("collapse");
+      var $collapseBtn = $(collapseBtn);
       
-      $(title).text(name).on("click", function(){$([tmp.domElements.root, hidden]).toggle()});
-      $(li).append(title, removeBtn, hidden, tmp.domElements.root);
+      $collapseBtn.on("click", function(){
+        if($collapseBtn.text() === "collapse") {
+          $collapseBtn.text("expand");
+          $(tmp.domElements.root).hide();
+        } else {
+          $collapseBtn.text("collapse");
+          $(tmp.domElements.root).show();
+        }
+      })
+      $(title).on("click", function(){$([tmp.domElements.root]).toggle()});
+      
+      $(inputGroup).append(title, collapseBtn, removeBtn);
+      $(li).append(inputGroup, tmp.domElements.root);
       
       $elem.append(li);
-      
+      element.revalidate();
       
     };
     var removeSubElement = function(name){
       element.domElements.types.object.jschProperties[name].domElements.root.parentNode.parentNode.removeChild(element.domElements.types.object.jschProperties[name].domElements.root.parentNode);
-      delete element.domElements.types.object.jschProperties[name];      
+      delete element.domElements.types.object.jschProperties[name];
+      element.revalidate();
       
     };
     
@@ -370,6 +394,20 @@
     $(elements.schemaId = document.createElement("h5")).addClass("panel-heading");
     // TODO: Validations!
     
+    $header.append($(document.createElement('h4')).text("Validations"));
+    elements.validationInputGroup = document.createElement("div");
+    elements.validationInputGroup.setAttribute("class", "input-group");
+    
+    var $inputGroup = $(elements.validationInputGroup); ////////////////////////////////////////////////////////////////////////////////////////
+    
+    if("type" in schema) $inputGroup.append(createAddon("type", "any-type"));
+    if("enum" in schema) $inputGroup.append(createAddon("enum", "any-enum"));
+    if("allOf" in schema) $inputGroup.append(createAddon("allOf", "any-allOf"));
+    if("anyOf" in schema) $inputGroup.append(createAddon("anyOf", "any-anyOf"));
+    if("oneOf" in schema) $inputGroup.append(createAddon("oneOf", "any-oneOf"));
+    if("not" in schema) $inputGroup.append(createAddon("not", "any-not"));
+    
+    $header.append($inputGroup);
     $root.append($header);
     
     // Body
@@ -607,7 +645,7 @@
           return true;
         }
       },
-      array: {
+      array: { // TODO: 
         items: function(){ // TODO: 
           if(schema.additionalItems === false) {
             var val = self.domElements.types.array.jschItems;
@@ -671,8 +709,11 @@
         anyOf: function(){
           if(schema.anyOf) {
             var i;
+            window.g = [];
             for (i=0; i<schema.anyOf.length; i++) {
-              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.anyOf[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() === "valid") return true;
+              var tmp = new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.anyOf[i], parent: self.getParent(), parentBase: self.getBase()});
+              window.g.push(tmp);
+              if(tmp.getStatus() === "valid") return true;
             }
             return false
           }
