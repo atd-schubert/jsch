@@ -659,7 +659,7 @@
           }
           return true;
         },
-        allOf: function(){ // TODO: test
+        allOf: function(){
           if(schema.allOf) {
             var i;
             for (i=0; i<schema.allOf.length; i++) {
@@ -668,7 +668,7 @@
           }
           return true;
         },
-        anyOf: function(){ // TODO: test
+        anyOf: function(){
           if(schema.anyOf) {
             var i;
             for (i=0; i<schema.anyOf.length; i++) {
@@ -678,7 +678,7 @@
           }
           return true;
         },
-        oneOf: function(){ // TODO:  test
+        oneOf: function(){
           if(schema.oneOf) {
             var i, n=0;
             for (i=0; i<schema.oneOf.length; i++) {
@@ -688,7 +688,7 @@
           }
           return true;
         },
-        not: function(){ // TODO: test 
+        not: function(){
           if(schema.not) {
             var i;
             for (i=0; i<schema.not.length; i++) {
