@@ -9,9 +9,6 @@
   
 */
 
-// temp
-// temp end
-
 (function(exports){
   var INVALIDCOLOR = "#ffaaaa";
   
