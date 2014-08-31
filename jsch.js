@@ -840,10 +840,10 @@
     //# constructor
     this.getJsonSchema = function(){return opts.jsonSchema || {};};
     this.getData = function(){
-      return first.getData();
+      return first.getValue();
     };
     this.setData = function(data){
-      return first.setData(data);
+      return first.setValue(data);
     };
     
     this.domElements = {
