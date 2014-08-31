@@ -663,7 +663,7 @@
           if(schema.allOf) {
             var i;
             for (i=0; i<schema.allOf.length; i++) {
-              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.allOf[i] })).getStatus() !== "valid") return false;
+              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.allOf[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() !== "valid") return false;
             }
           }
           return true;
@@ -672,7 +672,7 @@
           if(schema.anyOf) {
             var i;
             for (i=0; i<schema.anyOf.length; i++) {
-              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.anyOf[i] })).getStatus() === "valid") return true;
+              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.anyOf[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() === "valid") return true;
             }
             return false
           }
@@ -682,7 +682,7 @@
           if(schema.oneOf) {
             var i, n=0;
             for (i=0; i<schema.oneOf.length; i++) {
-              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.oneOf[i] })).getStatus() === "valid") n++;
+              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.oneOf[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() === "valid") n++;
             }
             return n === 1;
           }
@@ -692,7 +692,7 @@
           if(schema.not) {
             var i;
             for (i=0; i<schema.not.length; i++) {
-              if((new Element({Jsch:self.jsch, value: self.getValue(), jsonSchema: schema.not[i] })).getStatus() === "valid") return false;
+              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.not[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() === "valid") return false;
             }
           }
           return true;
