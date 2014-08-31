@@ -936,7 +936,6 @@
         if(path[i]!== "") base = base[path[i]];
         if(!base) return base;
       }
-      return base;
       return base || {}; // TODO: Maybe throw errors with invalid schema name
     };
     if(url.substr(0, 1) === "#") {
