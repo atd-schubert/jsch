@@ -23,7 +23,8 @@ input.invalid { background-color: #ffaaaa;}
 
 .jsch-element.jsch-validation-array-minItems-invalid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-minItems,
 .jsch-element.jsch-validation-array-maxItems-invalid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-maxItems,
-.jsch-element.jsch-validation-array-uniqueItems-invalid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-uniqueItems
+.jsch-element.jsch-validation-array-uniqueItems-invalid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-uniqueItems,
+.jsch-element.jsch-validation-array-items-invalid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-items
 
 { background-color: #ffaaaa; }
 

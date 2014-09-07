@@ -24,11 +24,17 @@ $(document).ready(function(){
     minProperties: 1,
     maxItems: 2,
     minItems: 1,
-    uniqueItems: true,
+    //uniqueItems: true,
     minimum: 6,
     maximum:12,
     exclusiveMinimum: true,
     pattern: "^(Test |test )",
+    additionalItems: false,
+    items: [
+      {type:"string"},
+      {type:"object"},
+      {default:"letzte..."}
+    ],
     additionalProperties: false,
     patternProperties: {
       "^test":{

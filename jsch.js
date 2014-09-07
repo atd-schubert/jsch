@@ -1,14 +1,5 @@
 "use strict";
 
-// TODO:
-/*
-  
-  more todos:
-  - implement $ref
-  - soft-validations in Element Class. That means validate and change the html class of the domroot, of invalid, but don't prevent
-  
-*/
-
 (function(exports){
   var INVALIDCOLOR = "#ffaaaa";
   
@@ -29,12 +20,10 @@
     var root = document.createElement("div");
     var $root = $(root).addClass("input-group-btn");
     
-    
     $root.append('<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">'+title+' <span class="caret"></span></button>');
     
     var ul = document.createElement("ul");
     setAttributes(ul, {class:"dropdown-menu", role:"menu"});
-    var $ul = $(ul);
     $root.append(ul);
     
     var i, tmpLi, tmpA;
@@ -51,34 +40,46 @@
     
     return root;
   };
-
-  var createNull = function(doms, element){
+  var createTab = function(name, disabled, doms, element){
     var btn = document.createElement("a");
     var $btn = $(btn);
-    var content = document.createElement("div");
-    
-    $(content).addClass("tab-pane jsch-type jsch-type-null").append('<h4>Null</h4><p>This key is null...</p>');
-    
-    $btn.text("Null");
-    if(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("null")>=0) {
-    
+    $btn.text(name);
+    if(disabled) {
+      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn))
+    } else {
       $(doms.typeList).append($(document.createElement("li")).append(btn));
     
       $btn.on("click", function(){
         $(doms.typeList).children().removeClass("active");
         $(btn.parentNode).addClass("active");
-        element.domElements.type.value="null";
+        element.domElements.type.value=name.toLowerCase();
         
         element.revalidate();
         $(doms.typeContent).children().hide().removeClass("active");
         $(content).show();
       });
-    } else {
-      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn));
+
     }
+    
+    var content = document.createElement("div");
+    $(content).addClass("tab-pane jsch-type jsch-type-"+name.toLowerCase());
+    
     $(doms.typeContent).append(content);
+    
+    return {btn: btn, content:content};
+  };
+  var addProperty = function(){};
+  var addItem = function(){};
+
+  var createNull = function(doms, element){
+    var tab = createTab("Null", !(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("null")>=0), doms, element);
+    $(tab.content).append('<h4>Null</h4><p>This key is null...</p>');
   };
   var createBoolean = function(doms, element){
+    var tab = createTab("Boolean", !(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("boolean")>=0), doms, element);
+    $(tab.content).append('<h4>Boolean value</h4>', element.domElements.types.boolean);
+    
+    return;
     var elem = element.domElements.types.boolean;
     var btn = document.createElement("a");
     var $btn = $(btn);
@@ -107,20 +108,20 @@
   };
   var createString = function(doms, element){
     var elem = element.domElements.types.string;
-
+    var schema = element.getJsonSchema();
+    var tab = createTab("String", !(!schema.type || schema.type.indexOf("string")>=0), doms, element);
     
-    var btn = document.createElement("a");
-    var content = document.createElement("div");
+    var content = tab.content;
     
-    $(content).addClass("tab-pane jsch-type jsch-type-string").append('<h4>String value</h4>');
+    $(content).append('<h4>String value</h4>');
     
     var inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
-    if(element.getJsonSchema().pattern) inputGroup.appendChild(createAddon("RegExpr", "string-pattern"));
-    if(element.getJsonSchema().minLength) inputGroup.appendChild(createAddon("n &ge; "+element.getJsonSchema().minLength, "string-minLength"));
-    if(element.getJsonSchema().maxLength) inputGroup.appendChild(createAddon("n &le; "+element.getJsonSchema().maxLength, "string-maxLength"));
-    if(element.getJsonSchema().format) {
-      switch (element.getJsonSchema().format) {
+    if(schema.pattern) inputGroup.appendChild(createAddon("RegExpr", "string-pattern"));
+    if(schema.minLength) inputGroup.appendChild(createAddon("n &ge; "+element.getJsonSchema().minLength, "string-minLength"));
+    if(schema.maxLength) inputGroup.appendChild(createAddon("n &le; "+element.getJsonSchema().maxLength, "string-maxLength"));
+    if(schema.format) {
+      switch (schema.format) {
         case "email":
           inputGroup.appendChild(createAddon("@", "string-format"));
           break;
@@ -137,83 +138,44 @@
           inputGroup.appendChild(createAddon(element.getJsonSchema().format, "string-format"));
       }
     }
-    if(!element.getJsonSchema().format && !element.getJsonSchema().minLength && !element.getJsonSchema().maxLength && !element.getJsonSchema().pattern) {
+    if(!schema.format && !schema.minLength && !schema.maxLength && !schema.pattern) {
       inputGroup.appendChild(createAddon("*"));
     }
     $(elem).addClass("form-control");
     inputGroup.appendChild(elem);
     
     $(content).append(inputGroup);
-    
-    var $btn = $(btn);
-    $btn.text("String");
-    if(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("string")>=0) {
-    
-      $(doms.typeList).append($(document.createElement("li")).append(btn));
-    
-      $btn.on("click", function(){
-        $(doms.typeList).children().removeClass("active");
-        $(btn.parentNode).addClass("active");
-        element.domElements.type.value="string";
-        
-        element.revalidate();
-        $(doms.typeContent).children().hide().removeClass("active");
-        $(content).show();
-      });
-    } else {
-      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn));
-    }
-    $(doms.typeContent).append(content);
   };
   var createNumber = function(doms, element){
     var elem = element.domElements.types.number;
+    var schema = element.getJsonSchema();
+    var tab = createTab("Number", !(!schema.type || schema.type.indexOf("number")>=0), doms, element);
     
-    var btn = document.createElement("a");
-    var content = document.createElement("div");
+    var content = tab.content;
     
-    $(content).addClass("tab-pane jsch-type jsch-type-number").append('<h4>Number value</h4>');
+    $(content).append('<h4>Number value</h4>');
     
     var inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
     
-    if(element.getJsonSchema().multipleOf) inputGroup.appendChild(createAddon(element.getJsonSchema().multipleOf+" | x", "number-multipleOf"));
-    else if(element.getJsonSchema().type === "integer") inputGroup.appendChild(createAddon("1 | x", "number-multipleOf"));
+    if(schema.multipleOf) inputGroup.appendChild(createAddon(schema.multipleOf+" | x", "number-multipleOf"));
+    else if(schema.type === "integer") inputGroup.appendChild(createAddon("1 | x", "number-multipleOf"));
     
-    if(element.getJsonSchema().minimum) {
-      if(element.getJsonSchema().exclusiveMinimum) inputGroup.appendChild(createAddon("&gt; "+element.getJsonSchema().minimum, "number-minimum"));
-      else inputGroup.appendChild(createAddon("&ge; "+element.getJsonSchema().minimum, "number-minimum"));
+    if(schema.minimum) {
+      if(schema.exclusiveMinimum) inputGroup.appendChild(createAddon("&gt; "+schema.minimum, "number-minimum"));
+      else inputGroup.appendChild(createAddon("&ge; "+schema.minimum, "number-minimum"));
     }
     
-    if(element.getJsonSchema().maximum) {
-      if(element.getJsonSchema().exclusiveMaximum) inputGroup.appendChild(createAddon("&lt; "+element.getJsonSchema().maximum, "number-maximum"));
-      else inputGroup.appendChild(createAddon("&le; "+element.getJsonSchema().maximum, "number-maximum"));
+    if(schema.maximum) {
+      if(schema.exclusiveMaximum) inputGroup.appendChild(createAddon("&lt; "+schema.maximum, "number-maximum"));
+      else inputGroup.appendChild(createAddon("&le; "+schema.maximum, "number-maximum"));
     }
-    if(!element.getJsonSchema().maximum && !element.getJsonSchema().minimum && !element.getJsonSchema().multipleOf && element.getJsonSchema().type !== "integer") inputGroup.appendChild(createAddon("*"));
+    if(!schema.maximum && !schema.minimum && !schema.multipleOf && schema.type !== "integer") inputGroup.appendChild(createAddon("*"));
     $(elem).addClass("form-control");
     inputGroup.appendChild(elem);
     
     $(content).append(inputGroup);
     
-    
-    var $btn = $(btn);
-    $btn.text("Number");
-    if(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("number")>=0 || element.getJsonSchema().type.indexOf("integer")>=0) {
-    
-      $(doms.typeList).append($(document.createElement("li")).append(btn));
-    
-      $btn.on("click", function(){
-        $(doms.typeList).children().removeClass("active");
-        $(btn.parentNode).addClass("active");
-        element.domElements.type.value="number";
-        
-        element.revalidate();
-        $(doms.typeContent).children().hide().removeClass("active");
-        $(content).show();
-      });
-    } else {
-      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn));
-    }
-    $(doms.typeContent).append(content);
   };
   var createObject = function(doms, element){
     var findSubSchema = function(name){
@@ -224,6 +186,7 @@
       for(hash in oldSchema.patternProperties) {
         if((new RegExp(hash)).test(name)) return oldSchema.patternProperties[hash];
       }
+      if(typeof oldSchema.additionalProperties === "object") return oldSchema.additionalProperties;
       return {};
     };
     var validPropertyName = function(name){
@@ -245,7 +208,7 @@
       if(subSchema.$ref) subSchema = Jsch.getSchemaFromDictionary(subSchema.$ref, element.getBase());
       if(value === undefined) value = subSchema.default;
       
-      var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema}); // TODO: remove value
+      var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema});
       element.domElements.types.object.jschProperties[name] = tmp;
       
       var li = document.createElement("li");
@@ -297,14 +260,15 @@
     };
     
     var elem = element.domElements.types.object;
-    var $elem = $(elem);
-    var btn = document.createElement("a");
-    var content = document.createElement("div");
-    var inputGroup;
-    var schema = element.getJsonSchema();
     
-    var $content = $(content).addClass("tab-pane jsch-type jsch-type-object");
-    inputGroup = document.createElement("div");
+    var schema = element.getJsonSchema();
+    var tab = createTab("Object", !(!schema.type || schema.type.indexOf("object")>=0), doms, element);
+    
+    var content = tab.content;
+    var $content = $(content);
+    
+    var $elem = $(elem);
+    var inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
     if(schema.maxProperties) inputGroup.appendChild(createAddon("n &le; "+schema.maxProperties, "object-maxProperties"));
     if(schema.minProperties) inputGroup.appendChild(createAddon("n &ge; "+schema.minProperties, "object-minProperties"));
@@ -316,11 +280,11 @@
     }
     
     
-    $(content).append('<h4>Create new property</h4>');
+    $content.append('<h4>Create new property</h4>');
     inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
     
-    if(element.getJsonSchema().patternProperties) inputGroup.appendChild(createAddon("RegExpr"));
+    if(schema.patternProperties) inputGroup.appendChild(createAddon("RegExpr"));
     var newKeyName = document.createElement("input");
     setAttributes(newKeyName, {type: "text", class:"form-control", placeholder: "new key name", alt: "The key-name for the new element"});
     
@@ -331,16 +295,16 @@
       .addClass("form-control")
       .on("click", function(){addSubElement(newKeyName.value)});
     
-    if(element.getJsonSchema().properties) {
+    if(schema.properties) {
       var hash;
       var properties = [];
-      for (hash in element.getJsonSchema().properties) {
+      for (hash in schema.properties) {
         properties.push(hash);
       }
       inputGroup.appendChild(createEnum("predefined types", properties, newKeyName));
     }
-    if(element.getJsonSchema().additionalProperties !== false) inputGroup.appendChild(createAddon("*"));
-    if(element.getJsonSchema().additionalProperties === false && !element.getJsonSchema().patternProperties) $(newKeyName).attr("disabled", "disabled")
+    if(schema.additionalProperties !== false) inputGroup.appendChild(createAddon("*"));
+    if(schema.additionalProperties === false && !schema.patternProperties) $(newKeyName).attr("disabled", "disabled");
     inputGroup.appendChild(newKeyName);
     
     $(newKeyName).on("input", function(){
@@ -348,37 +312,15 @@
       else newKeyName.style.backgroundColor = INVALIDCOLOR;
     });
     
-    
-    
-    $(content).append([inputGroup, createKeyBtn, elem]);
-    
-    var $btn = $(btn);
-    $btn.text("Object");
-    if(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("object")>=0) {
-    
-      $(doms.typeList).append($(document.createElement("li")).append(btn));
-    
-      $btn.on("click", function(){
-        $(doms.typeList).children().removeClass("active");
-        $(btn.parentNode).addClass("active");
-        element.domElements.type.value="object";
-        
-        element.revalidate();
-        $(doms.typeContent).children().hide().removeClass("active");
-        $(content).show();
-      });
-    } else {
-      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn));
-    }
-    $(doms.typeContent).append(content);
+    $content.append(inputGroup, createKeyBtn, elem);
   };
-  var createArray = function(doms, element){ ///////////////////////////////////////////////////////////////////////////////
+  var createArray = function(doms, element){
+    // TODO: move an item up or down
     var findSubSchema = function(pos){
       var oldSchema = element.getJsonSchema();
-      if(oldSchema.items && oldSchema.items[pos]) return oldSchema.properties[pos];
+      if(oldSchema.items && oldSchema.items[pos]) return oldSchema.items[pos];
       
       if(typeof oldSchema.additionalItems === "object") return oldSchema.additionalItems;
-      
       return {};
     };
     
@@ -386,7 +328,6 @@
       var subSchema = findSubSchema(elem.jschItems.length);
       if(value === undefined) value = subSchema.default;
       var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema});
-      
       elem.jschItems.push(tmp);
       
       var li = document.createElement("li");
@@ -399,7 +340,7 @@
         //.text("remove")
         .addClass("label-danger")
         .on("click", function(){
-          removeSubElement(tmp); // TODO: make removeSubElement first
+          removeSubElement(tmp);
         });
       
       var collapseBtn = createAddon("collapse");
@@ -436,69 +377,13 @@
       $elem.append(li);
       element.revalidate();
       
-      
-      
-      
-      
       return;
       
-      /*
-      if(element.domElements.types.array.jschItems[name]) return;
-      if(!validPropertyName(name)) return;
-      var subSchema = findSubSchema(name);
-      if(subSchema.$ref) subSchema = Jsch.getSchemaFromDictionary(, element.getBase());
-      if(value === undefined) value = subSchema.default;
-      
-      var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema}); // TODO: remove value
-      element.domElements.types.object.jschProperties[name] = tmp;
-      
-      var li = document.createElement("li");
-      var inputGroup = document.createElement("div");
-      inputGroup.setAttribute("class", "input-group");
-      
-      var title = document.createElement("input");
-      var $title = $(title);
-      title.setAttribute("type", "text");
-      title.setAttribute("disabled", "disabled");
-      title.value = name;
-      $title.addClass("form-control");
-      $title.addClass("form-control");
-      
-      var removeBtn = createAddon("remove");
-      $(removeBtn)
-        //.text("remove")
-        .addClass("label-danger")
-        .on("click", function(){
-          removeSubElement(name);
-        });
-      
-      var collapseBtn = createAddon("collapse");
-      var $collapseBtn = $(collapseBtn);
-      
-      $collapseBtn.on("click", function(){
-        if($collapseBtn.text() === "collapse") {
-          $collapseBtn.text("expand");
-          $(tmp.domElements.root).hide();
-        } else {
-          $collapseBtn.text("collapse");
-          $(tmp.domElements.root).show();
-        }
-      })
-/// ACHTUNG dis aus object löschen!!! $(title).on("click", function(){$([tmp.domElements.root]).toggle()});
-      
-      $(inputGroup).append(title, collapseBtn, removeBtn);
-      $(li).append(inputGroup, tmp.domElements.root);
-      
-      $elem.append(li);
-      element.revalidate();
-      
-    */};
+    };
     var removeSubElement = function(elem){
       var i;
       var items = element.domElements.types.array.jschItems;
-        console.log(items, elem)
       for (i=0; i<items.length; i++) {
-        console.log(items, elem, items[i]===elem)
         if(items[i]===elem) {
           element.domElements.types.array.removeChild(element.domElements.types.array.children[i]);
           items.splice(i, 1);
@@ -508,57 +393,38 @@
     };
     
     var elem = element.domElements.types.array;
+    
+    var schema = element.getJsonSchema();
+    var tab = createTab("Array", !(!schema.type || schema.type.indexOf("array")>=0), doms, element);
+    
+    var content = tab.content;
+    
     var $elem = $(elem);
-    var btn = document.createElement("a");
-    var content = document.createElement("div");
     var inputGroup;
     var schema = element.getJsonSchema();
     
-    var $content = $(content).addClass("tab-pane jsch-type jsch-type-array");
+    var $content = $(content);
     inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
     if(schema.minItems) inputGroup.appendChild(createAddon("n &ge; "+schema.minItems, "array-minItems"));
     if(schema.maxItems) inputGroup.appendChild(createAddon("n &le; "+schema.maxItems, "array-maxItems"));
     if(schema.uniqueItems) inputGroup.appendChild(createAddon("unique", "array-uniqueItems"));
-    // ? if(schema.items) inputGroup.appendChild(createAddon("structure", "array-items"));
+    if(schema.items) inputGroup.appendChild(createAddon("structure", "array-items"));
     
     if(inputGroup.hasChildNodes()) {
       $(content).append('<h4>Array validations</h4>', inputGroup);
     }
     
-    
-    $(content).append('<h4>Append new property</h4>');
+    $content.append('<h4>Append new property</h4>');
     
     var createItemBtn = document.createElement("button");
     $(createItemBtn)
       .text("append")
       .addClass("form-control")
       .on("click", function(){addSubElement()});
-    
-    
-    $(content).append([createItemBtn, elem]);
-    
-    var $btn = $(btn);
-    $btn.text("Array");
-    if(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("array")>=0) {
-    
-      $(doms.typeList).append($(document.createElement("li")).append(btn));
-    
-      $btn.on("click", function(){
-        $(doms.typeList).children().removeClass("active");
-        $(btn.parentNode).addClass("active");
-        element.domElements.type.value="array";
-        
-        element.revalidate();
-        $(doms.typeContent).children().hide().removeClass("active");
-        $(content).show();
-      });
-    } else {
-      $(doms.typeList).append($(document.createElement("li")).addClass("disabled").append(btn));
-    }
-    $(doms.typeContent).append(content);
+      
+    $content.append(createItemBtn, elem);
   };
-  
   
   var defaultView = function(elem) {
     var $root = $(elem.domElements.root);
@@ -570,8 +436,16 @@
       $root.find(".jsch-type").hide();
       $root.find(".jsch-type-"+type).show();
       
-      // if(type === "object") { setValue to known properties, delete no longer existing properties and create new ones.}
-      // if(type === "array") {}
+      
+      if(type === "object") {
+        // TODO: something like: addProperty(name, value) in a for-loop
+      
+        
+      }
+      if(type === "array") {
+        
+        // TODO: something like: addItem(value) in a for-loop
+      }
     };
     
     var elements = {};
@@ -624,9 +498,6 @@
     createNull(elements, elem);
     
     $root.append($body);
-    
-    
-    
   };
   
   var Element = function(opts){
@@ -663,7 +534,7 @@
       root: document.createElement("div"),
       type: document.createElement("input"),
       types: {
-        string: document.createElement("input"),
+        string: document.createElement("textarea"), // not only an input because you should able to make new lines in strings
         number: document.createElement("input"),
         boolean: document.createElement("input"),
         //null,
@@ -672,15 +543,15 @@
       }
     };
     // Configure DOM-Elements
-    setAttributes(this.domElements.root, {class: "jsch-element"}); // TODO: jsch-data-valid
-    setAttributes(this.domElements.types.string, {type: "text", class: "jsch-data jsch-data-string"}); // TODO: jsch-data-valid
-    setAttributes(this.domElements.types.number, {type: "number", class: "jsch-data jsch-data-number"}); // TODO: jsch-data-valid
-    setAttributes(this.domElements.types.boolean, {type: "checkbox", class: "jsch-data jsch-data-boolean"}); // TODO: jsch-data-valid
-    setAttributes(this.domElements.types.array, {class: "jsch-data jsch-data-array"}); // TODO: jsch-data-valid
+    setAttributes(this.domElements.root, {class: "jsch-element"});
+    setAttributes(this.domElements.types.string, {type: "text", class: "jsch-data jsch-data-string"});
+    setAttributes(this.domElements.types.number, {type: "number", class: "jsch-data jsch-data-number"});
+    setAttributes(this.domElements.types.boolean, {type: "checkbox", class: "jsch-data jsch-data-boolean"});
+    setAttributes(this.domElements.types.array, {class: "jsch-data jsch-data-array"});
     this.domElements.types.array.jschItems = [];
-    setAttributes(this.domElements.types.object, {class: "jsch-data jsch-data-object"}); // TODO: jsch-data-valid
+    setAttributes(this.domElements.types.object, {class: "jsch-data jsch-data-object"});
     this.domElements.types.object.jschProperties = {};
-    setAttributes(this.domElements.type, {type:"hidden"}); // TODO: jsch-data-valid
+    setAttributes(this.domElements.type, {type:"hidden"});
     
     // validations
     this.validations = {
@@ -827,9 +698,9 @@
               }
             }
           }
-          else if(typeof schema.additionalProperties === "object") {
-            console.warn("// TODO: Jsch has to handle a JSON schema as additionalProperties");
-          }
+          //else if(typeof schema.additionalProperties === "object") {
+            // There is nothing todo, because this is already validated by a subschema
+          //}
           return true;
         },
         dependencies: function(){
@@ -847,10 +718,24 @@
           return true;
         }
       },
-      array: { // TODO: 
-        items: function(){ // TODO: 
+      array: {
+        items: function(){
           if(schema.additionalItems === false) {
             var val = self.domElements.types.array.jschItems;
+            //if(val.length !== schema.items.length) return false;
+            var i;
+            
+            if(Array.prototype.isPrototypeOf(schema.items)) {
+              for(i=0; i<val.length; i++) {
+                val[i].setJSONSchema(schema.items[i]);
+                if(val[i].getStatus()!=="valid") return false;
+              }
+            } else if (typeof schema.items === "object"){
+              var tmp = new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.items, parent: self.getParent(), parentBase: self.getBase()});
+              if(tmp.getStatus() !== "valid") return false;
+            }
+            
+
           }
           return true;
         },
@@ -913,10 +798,8 @@
         anyOf: function(){
           if(schema.anyOf) {
             var i;
-            window.g = [];
             for (i=0; i<schema.anyOf.length; i++) {
               var tmp = new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.anyOf[i], parent: self.getParent(), parentBase: self.getBase()});
-              window.g.push(tmp);
               if(tmp.getStatus() === "valid") return true;
             }
             return false
@@ -1052,9 +935,7 @@
     this.getSchema = this.getJsonSchema = this.getJSONSchema = function(){return schema;};
     this.revalidate = function(){validate();};
     this.getStatus = function(){
-      if(!validate()) return "invalid"; 
-      // enum: valid, invalid, sub-invalid
-      // TODO: sub-invalid
+      if(!validate()) return "invalid";
       if(!self.checkSubValidity()) return "sub-invalid";
       return "valid";
     };
@@ -1065,8 +946,9 @@
       if(self.domElements.type.value !== "array" && self.domElements.type.value !== "object") bool = true;
       else if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) bool = false;
       
-      if(self.domElements.type.value === "array" && !self.validations.array.uniqueItems()) {
-        setTimeout(validate, 1);
+      if(self.domElements.type.value === "array" && !self.validations.array.uniqueItems() || !runValidations("any")) {
+        setTimeout(validate, 100);
+        console.log("// TODO: solve this a little bit nicer");
       }
       
       if(bool) $root.removeClass("jsch-validation-subinvalid");
@@ -1075,7 +957,7 @@
       return bool;
     };
     
-    defaultView(this);
+    Jsch.render(this);
     
     if(opts && "value" in opts) this.setValue(opts.value);
   };
@@ -1120,6 +1002,15 @@
     this.first = first;
     $(this.domElements.root).append(first.domElements.root);
      
+  };
+  Jsch.views = {};
+  Jsch.render = function(elem){
+    var id = elem.getSchema().id;
+    if(id in Jsch.views) Jsch.views[id](elem);
+    else defaultView(elem);
+  };
+  Jsch.addView = function(id, fn){
+    Jsch.views[id] = fn; 
   };
   Jsch.dictionary = {};
   Jsch.addToDictionary = function(schema){
@@ -1186,13 +1077,15 @@
   Jsch.getSchemaFromDictionary = function(url, base){
     var resolve = function(base, path){
       var i;
+      var id = base.id+path;
       if(typeof path === "string") path = path.split("/");
       
       for (i=0; i<path.length; i++) {
         if(path[i]!== "") base = base[path[i]];
-        if(!base) return base;
       }
-      return base || {}; // TODO: Maybe throw errors with invalid schema name
+      base = base || {};
+      if(!("id" in base)) base.id = id;
+      return base; // TODO: Maybe throw errors with invalid schema name
     };
     if(url.substr(0, 1) === "#") {
       if(!base) throw new Error("Can't resolve relative schema without base");
@@ -1214,9 +1107,11 @@
     }
     return false;
   };
+  
+  // Add the default JSON-Schema and hyper schema for JSON-Schemas
   Jsch.addToDictionary({id:"http://json-schema.org/draft-04/schema#",$schema:"http://json-schema.org/draft-04/schema#",description:"Core schema meta-schema",definitions:{schemaArray:{type:"array",minItems:1,items:{$ref:"#"}},positiveInteger:{type:"integer",minimum:0},positiveIntegerDefault0:{allOf:[{$ref:"#/definitions/positiveInteger"},{"default":0}]},simpleTypes:{"enum":["array","boolean","integer","null","number","object","string"]},stringArray:{type:"array",items:{type:"string"},minItems:1,uniqueItems:true}},type:"object",properties:{id:{type:"string",format:"uri"},$schema:{type:"string",format:"uri"},title:{type:"string"},description:{type:"string"},"default":{},multipleOf:{type:"number",minimum:0,exclusiveMinimum:true},maximum:{type:"number"},exclusiveMaximum:{type:"boolean","default":false},minimum:{type:"number"},exclusiveMinimum:{type:"boolean","default":false},maxLength:{$ref:"#/definitions/positiveInteger"},minLength:{$ref:"#/definitions/positiveIntegerDefault0"},pattern:{type:"string",format:"regex"},additionalItems:{anyOf:[{type:"boolean"},{$ref:"#"}],"default":{}},items:{anyOf:[{$ref:"#"},{$ref:"#/definitions/schemaArray"}],"default":{}},maxItems:{$ref:"#/definitions/positiveInteger"},minItems:{$ref:"#/definitions/positiveIntegerDefault0"},uniqueItems:{type:"boolean","default":false},maxProperties:{$ref:"#/definitions/positiveInteger"},minProperties:{$ref:"#/definitions/positiveIntegerDefault0"},required:{$ref:"#/definitions/stringArray"},additionalProperties:{anyOf:[{type:"boolean"},{$ref:"#"}],"default":{}},definitions:{type:"object",additionalProperties:{$ref:"#"},"default":{}},properties:{type:"object",additionalProperties:{$ref:"#"},"default":{}},patternProperties:{type:"object",additionalProperties:{$ref:"#"},"default":{}},dependencies:{type:"object",additionalProperties:{anyOf:[{$ref:"#"},{$ref:"#/definitions/stringArray"}]}},"enum":{type:"array",minItems:1,uniqueItems:true},type:{anyOf:[{$ref:"#/definitions/simpleTypes"},{type:"array",items:{$ref:"#/definitions/simpleTypes"},minItems:1,uniqueItems:true}]},allOf:{$ref:"#/definitions/schemaArray"},anyOf:{$ref:"#/definitions/schemaArray"},oneOf:{$ref:"#/definitions/schemaArray"},not:{$ref:"#"}},dependencies:{exclusiveMaximum:["maximum"],exclusiveMinimum:["minimum"]},"default":{}})
   
   Jsch.addToDictionary({$schema:"http://json-schema.org/draft-04/hyper-schema#",id:"http://json-schema.org/draft-04/hyper-schema#",title:"JSON Hyper-Schema",allOf:[{$ref:"http://json-schema.org/draft-04/schema#"}],properties:{additionalItems:{anyOf:[{type:"boolean"},{$ref:"#"}]},additionalProperties:{anyOf:[{type:"boolean"},{$ref:"#"}]},dependencies:{additionalProperties:{anyOf:[{$ref:"#"},{type:"array"}]}},items:{anyOf:[{$ref:"#"},{$ref:"#/definitions/schemaArray"}]},definitions:{additionalProperties:{$ref:"#"}},patternProperties:{additionalProperties:{$ref:"#"}},properties:{additionalProperties:{$ref:"#"}},allOf:{$ref:"#/definitions/schemaArray"},anyOf:{$ref:"#/definitions/schemaArray"},oneOf:{$ref:"#/definitions/schemaArray"},not:{$ref:"#"},links:{type:"array",items:{$ref:"#/definitions/linkDescription"}},fragmentResolution:{type:"string"},media:{type:"object",properties:{type:{description:"A media type, as described in RFC 2046",type:"string"},binaryEncoding:{description:"A content encoding scheme, as described in RFC 2045",type:"string"}}},pathStart:{description:"Instances' URIs must start with this value for this schema to apply to them",type:"string",format:"uri"}},definitions:{schemaArray:{type:"array",items:{$ref:"#"}},linkDescription:{title:"Link Description Object",type:"object",required:["href","rel"],properties:{href:{description:"a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",type:"string"},rel:{description:"relation to the target resource of the link",type:"string"},title:{description:"a title for the link",type:"string"},targetSchema:{description:"JSON Schema describing the link target",$ref:"#"},mediaType:{description:"media type (as defined by RFC 2046) describing the link target",type:"string"},method:{description:'method for requesting the target of the link (e.g. for HTTP this might be "GET" or "DELETE")',type:"string"},encType:{description:"The media type in which to submit data along with the request",type:"string","default":"application/json"},schema:{description:"Schema describing the data to submit along with the request",$ref:"#"}}}},links:[{rel:"self",href:"{+id}"},{rel:"full",href:"{+($ref)}"}]});
   
   exports.Jsch = Jsch;
-})(window);
+})(window || exports);
