@@ -68,8 +68,59 @@
     
     return {btn: btn, content:content};
   };
-  var addProperty = function(){};
-  var addItem = function(){};
+  var addProperty = function(element, name){
+    if(!element.domElements.types.object.jschProperties[name]) return;
+    
+    var removeSubElement = function(name){
+      element.domElements.types.object.jschProperties[name].domElements.root.parentNode.parentNode.removeChild(element.domElements.types.object.jschProperties[name].domElements.root.parentNode);
+      delete element.domElements.types.object.jschProperties[name];
+      element.revalidate();
+    };
+    var $elem = $(element.domElements.types.object);
+    
+    var tmp = element.domElements.types.object.jschProperties[name]; // TODO find a better name for this var
+    
+    var li = document.createElement("li");
+    var inputGroup = document.createElement("div");
+    inputGroup.setAttribute("class", "input-group");
+    
+    var title = document.createElement("input");
+    var $title = $(title);
+    title.setAttribute("type", "text");
+    title.setAttribute("disabled", "disabled");
+    title.value = name;
+    $title.addClass("form-control");
+    $title.addClass("form-control");
+    
+    var removeBtn = createAddon("remove");
+    $(removeBtn)
+      //.text("remove")
+      .addClass("label-danger")
+      .on("click", function(){
+        removeSubElement(name);
+      });
+    
+    var collapseBtn = createAddon("collapse");
+    var $collapseBtn = $(collapseBtn);
+    
+    $collapseBtn.on("click", function(){
+      if($collapseBtn.text() === "collapse") {
+        $collapseBtn.text("expand");
+        $(tmp.domElements.root).hide();
+      } else {
+        $collapseBtn.text("collapse");
+        $(tmp.domElements.root).show();
+      }
+    })
+    $(title).on("click", function(){$([tmp.domElements.root]).toggle()});
+    
+    $(inputGroup).append(title, collapseBtn, removeBtn);
+    $(li).append(inputGroup, tmp.domElements.root);
+    
+    $elem.append(li);
+    element.revalidate();
+  };
+  var addItem = function(element, value){console.log("// TODO: Adding Item");};
 
   var createNull = function(doms, element){
     var tab = createTab("Null", !(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("null")>=0), doms, element);
@@ -178,17 +229,10 @@
     
   };
   var createObject = function(doms, element){
-    var findSubSchema = function(name){
-      var oldSchema = element.getJsonSchema();
-      if(oldSchema.properties && oldSchema.properties[name]) return oldSchema.properties[name];
-      
-      var hash;
-      for(hash in oldSchema.patternProperties) {
-        if((new RegExp(hash)).test(name)) return oldSchema.patternProperties[hash];
-      }
-      if(typeof oldSchema.additionalProperties === "object") return oldSchema.additionalProperties;
-      return {};
-    };
+    var elem = element.domElements.types.object;
+    var $elem = $(elem);
+    var schema = element.getJsonSchema();
+    
     var validPropertyName = function(name){
       var oldSchema = element.getJsonSchema();
       if(oldSchema.additionalProperties !== false) return true;
@@ -200,74 +244,25 @@
       }
       return false;
     };
-    
     var addSubElement = function(name, value){
       if(element.domElements.types.object.jschProperties[name]) return;
       if(!validPropertyName(name)) return;
-      var subSchema = findSubSchema(name);
+      
+      var subSchema = element.getSubSchema(name);
       if(subSchema.$ref) subSchema = Jsch.getSchemaFromDictionary(subSchema.$ref, element.getBase());
       if(value === undefined) value = subSchema.default;
       
-      var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema});
-      element.domElements.types.object.jschProperties[name] = tmp;
+      element.domElements.types.object.jschProperties[name] = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema});
       
-      var li = document.createElement("li");
-      var inputGroup = document.createElement("div");
-      inputGroup.setAttribute("class", "input-group");
+      addProperty(element, name);
       
-      var title = document.createElement("input");
-      var $title = $(title);
-      title.setAttribute("type", "text");
-      title.setAttribute("disabled", "disabled");
-      title.value = name;
-      $title.addClass("form-control");
-      $title.addClass("form-control");
-      
-      var removeBtn = createAddon("remove");
-      $(removeBtn)
-        //.text("remove")
-        .addClass("label-danger")
-        .on("click", function(){
-          removeSubElement(name);
-        });
-      
-      var collapseBtn = createAddon("collapse");
-      var $collapseBtn = $(collapseBtn);
-      
-      $collapseBtn.on("click", function(){
-        if($collapseBtn.text() === "collapse") {
-          $collapseBtn.text("expand");
-          $(tmp.domElements.root).hide();
-        } else {
-          $collapseBtn.text("collapse");
-          $(tmp.domElements.root).show();
-        }
-      })
-      $(title).on("click", function(){$([tmp.domElements.root]).toggle()});
-      
-      $(inputGroup).append(title, collapseBtn, removeBtn);
-      $(li).append(inputGroup, tmp.domElements.root);
-      
-      $elem.append(li);
-      element.revalidate();
-      
-    };
-    var removeSubElement = function(name){
-      element.domElements.types.object.jschProperties[name].domElements.root.parentNode.parentNode.removeChild(element.domElements.types.object.jschProperties[name].domElements.root.parentNode);
-      delete element.domElements.types.object.jschProperties[name];
-      element.revalidate();
-      
+      return;      
     };
     
-    var elem = element.domElements.types.object;
-    
-    var schema = element.getJsonSchema();
     var tab = createTab("Object", !(!schema.type || schema.type.indexOf("object")>=0), doms, element);
-    
     var content = tab.content;
     var $content = $(content);
     
-    var $elem = $(elem);
     var inputGroup = document.createElement("div");
     inputGroup.setAttribute("class", "input-group");
     if(schema.maxProperties) inputGroup.appendChild(createAddon("n &le; "+schema.maxProperties, "object-maxProperties"));
@@ -325,7 +320,8 @@
     };
     
     var addSubElement = function(value){
-      var subSchema = findSubSchema(elem.jschItems.length);
+      var subSchema = element.getSubSchema(elem.jschItems.length);
+      
       if(value === undefined) value = subSchema.default;
       var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema});
       elem.jschItems.push(tmp);
@@ -438,13 +434,28 @@
       
       
       if(type === "object") {
-        // TODO: something like: addProperty(name, value) in a for-loop
-      
+        var obj = elem.domElements.types.object;
+        $(obj).children().remove();
+        var properties = obj.jschProperties;
+        var hash;
+        
+        for (hash in properties) {
+          console.log(hash);
+          addProperty(elem, hash);
+        }
         
       }
       if(type === "array") {
+        // TODO: test this // something like: addItem(value) in a for-loop
+        var obj = elem.domElements.types.array;
+        $(obj).children().remove();
+        var items = obj.jschItems;
+        var i;
         
-        // TODO: something like: addItem(value) in a for-loop
+        for (i=0; i<items.length; i++) {
+          console.log(i);
+          addItem(elem, i);
+        }
       }
     };
     
@@ -901,11 +912,12 @@
     this.setValue = function(val){
       if(val === null) {
         this.domElements.type.value = "null";
-        if(this.domElements.root.refresh) this.domElements.root.refresh();
         refresh();
         return 
       }
       var type = typeof val;
+      if(type === "object" && Array.prototype.isPrototypeOf(val)) type = "array";
+      
       switch (type) {
         case "string":
           this.domElements.types.string.value = val;
@@ -920,12 +932,20 @@
           this.domElements.type.value = "boolean";
           break;
         case "object":
-          var obj = this.domElements.types.object.jschProperties;
+          var obj = this.domElements.types.object.jschProperties = {};
           var hash;
           for(hash in val) {
-            obj[hash] = new Element({parent:this, value: obj[hash], Jsch: self.Jsch});
+            obj[hash] = new Element({parent:self, value: val[hash], Jsch: self.Jsch, jsonSchema: self.getSubSchema(hash)});
           }
           this.domElements.type.value = "object";
+          break;
+        case "array":
+          var arr = this.domElements.types.array.jschItems = [];
+          var i;
+          for(i=0; i<val.length; i++) {
+            arr.push(new Element({parent:this, value: val[hash], Jsch: self.Jsch, jsonSchema: self.getSubSchema(i)}));
+          }
+          this.domElements.type.value = "array";
           break;
       }
       refresh();
@@ -933,6 +953,23 @@
     this.Jsch = opts.Jsch;
     this.setSchema = this.setJsonSchema = this.setJSONSchema = function(val){schema = val;};
     this.getSchema = this.getJsonSchema = this.getJSONSchema = function(){return schema;};
+    this.getSubSchema = function(name){
+      if(typeof name === "string") {
+        if(schema.properties && schema.properties[name]) return schema.properties[name];
+        
+        var hash;
+        for(hash in schema.patternProperties) {
+          if((new RegExp(hash)).test(name)) return oldSchema.patternProperties[hash];
+        }
+        if(typeof schema.additionalProperties === "object") return schema.additionalProperties;
+      }
+      if(typeof name === "number") {
+        if(schema.items && schema.items[name]) return schema.items[name];
+        
+        if(typeof schema.additionalProperties === "object") return schema.additionalItems;
+      }
+      return {type:"null", title:"Invalid Subschema", description:"Jsch can't find a valid subschema..."};
+    };
     this.revalidate = function(){validate();};
     this.getStatus = function(){
       if(!validate()) return "invalid";
@@ -947,7 +984,7 @@
       else if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) bool = false;
       
       if(self.domElements.type.value === "array" && !self.validations.array.uniqueItems() || !runValidations("any")) {
-        setTimeout(validate, 100);
+        setTimeout(validate, 1000);
         console.log("// TODO: solve this a little bit nicer");
       }
       
