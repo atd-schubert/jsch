@@ -434,6 +434,11 @@
       $root.find(".jsch-type").hide();
       $root.find(".jsch-type-"+type).show();
       
+      $root.find(".jsch-types li").each(function(){
+        if(this.firstChild.firstChild.nodeValue.toLowerCase() === type) $(this).addClass("active");
+        else $(this).removeClass("active");
+      });
+      $root.find(".jsch-type-"+type).show();
       
       if(type === "object") {
         var obj = elem.domElements.types.object;
