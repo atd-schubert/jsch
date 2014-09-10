@@ -86,11 +86,12 @@
     
     var title = document.createElement("input");
     var $title = $(title);
-    title.setAttribute("type", "text");
-    title.setAttribute("disabled", "disabled");
+    setAttributes(title, {
+      type:"text",
+      disabled:"disabled",
+      class:"form-control"
+    });
     title.value = name;
-    $title.addClass("form-control");
-    $title.addClass("form-control");
     
     var removeBtn = createAddon("remove");
     $(removeBtn)
@@ -506,6 +507,8 @@
     createNumber(elements, elem);
     createBoolean(elements, elem);
     createNull(elements, elem);
+    
+    elem.domElements.root.refresh();
     
     $root.append($body);
   };

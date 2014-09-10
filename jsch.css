@@ -36,3 +36,10 @@ input.invalid { background-color: #ffaaaa;}
 .jsch-element.jsch-validation-invalid {
   background-color: #fff0f0;
 }
+
+.jsch-data-object > li > .input-group > input[type="text"] {
+  font-size: 1.6em;
+}
+.jsch-data-object > li {
+  list-style-position: inside;
+}
