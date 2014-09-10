@@ -240,7 +240,8 @@
       
       var hash;
       for(hash in oldSchema.patternProperties) {
-        if((new RegExp(hash)).test(name)) return true;
+        hash = new RegExp(hash);
+        if(hash.test(name)) return true;
       }
       return false;
     };
@@ -440,7 +441,6 @@
         var hash;
         
         for (hash in properties) {
-          console.log(hash);
           addProperty(elem, hash);
         }
         
@@ -453,7 +453,6 @@
         var i;
         
         for (i=0; i<items.length; i++) {
-          console.log(i);
           addItem(elem, i);
         }
       }
@@ -697,7 +696,7 @@
             
             
             for (hash in val) {
-              if(!hash in schema.properties) {
+              if(schema && schema.properties && !(hash in schema.properties)) {
                 oneOfThem = false;
                 for(i=0; i<patternRegExps; i++) {
                   if(patternRegExps[i].test(hash)) {
@@ -959,14 +958,14 @@
         
         var hash;
         for(hash in schema.patternProperties) {
-          if((new RegExp(hash)).test(name)) return oldSchema.patternProperties[hash];
+          if((new RegExp(hash)).test(name)) return schema.patternProperties[hash];
         }
         if(typeof schema.additionalProperties === "object") return schema.additionalProperties;
       }
       if(typeof name === "number") {
         if(schema.items && schema.items[name]) return schema.items[name];
         
-        if(typeof schema.additionalProperties === "object") return schema.additionalItems;
+        if(typeof schema.additionalItems === "object") return schema.additionalItems;
       }
       return {type:"null", title:"Invalid Subschema", description:"Jsch can't find a valid subschema..."};
     };
