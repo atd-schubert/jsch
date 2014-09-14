@@ -28,6 +28,34 @@ input.invalid { background-color: #ffaaaa;}
 
 { background-color: #ffaaaa; }
 
+.jsch-element.jsch-validation-string-pattern-valid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-pattern,
+.jsch-element.jsch-validation-string-maxLength-valid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-maxLength,
+.jsch-element.jsch-validation-string-minLength-valid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-minLength,
+.jsch-element.jsch-validation-string-format-valid > div > .jsch-types-content > .jsch-type-string .jsch-validation-out-string-format,
+
+.jsch-element.jsch-validation-number-multipleOf-valid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-multipleOf,
+.jsch-element.jsch-validation-number-maximum-valid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-maximum,
+.jsch-element.jsch-validation-number-minimum-valid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-minimum,
+
+.jsch-element.jsch-validation-any-type-valid > .panel-heading > .input-group .jsch-validation-out-any-type,
+.jsch-element.jsch-validation-any-anyOf-valid > .panel-heading > .input-group .jsch-validation-out-any-anyOf,
+.jsch-element.jsch-validation-any-allOf-valid > .panel-heading > .input-group .jsch-validation-out-any-allOf,
+.jsch-element.jsch-validation-any-oneOf-valid > .panel-heading > .input-group .jsch-validation-out-any-oneOf,
+.jsch-element.jsch-validation-any-not-valid > .panel-heading > .input-group .jsch-validation-out-any-not,
+
+.jsch-element.jsch-validation-object-maxProperties-valid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-maxProperties,
+.jsch-element.jsch-validation-object-minProperties-valid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-minProperties,
+.jsch-element.jsch-validation-object-properties-valid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-properties,
+.jsch-element.jsch-validation-object-required-valid > .panel-body > .jsch-types-content > .jsch-type-object > .input-group .jsch-validation-out-object-required,
+
+
+.jsch-element.jsch-validation-array-minItems-valid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-minItems,
+.jsch-element.jsch-validation-array-maxItems-valid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-maxItems,
+.jsch-element.jsch-validation-array-uniqueItems-valid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-uniqueItems,
+.jsch-element.jsch-validation-array-items-valid > .panel-body > .jsch-types-content > .jsch-type-array > .input-group .jsch-validation-out-array-items
+
+{background-color: #c6ff93; }
+
 
 .jsch-element.jsch-validation-subinvalid {
   background-color: #fff3c3;
@@ -39,6 +67,7 @@ input.invalid { background-color: #ffaaaa;}
 
 .jsch-data-object > li > .input-group > input[type="text"] {
   font-size: 1.6em;
+  font-weight: bold;
 }
 .jsch-data-object > li {
   list-style-position: inside;
