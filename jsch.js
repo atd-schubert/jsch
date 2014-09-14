@@ -113,7 +113,6 @@
         $(tmp.domElements.root).show();
       }
     })
-    $(title).on("click", function(){$([tmp.domElements.root]).toggle()});
     
     $(inputGroup).append(title, collapseBtn, removeBtn);
     $(li).append(inputGroup, tmp.domElements.root);
@@ -121,7 +120,76 @@
     $elem.append(li);
     element.revalidate();
   };
-  var addItem = function(element, value){console.log("// TODO: Adding Item");};
+  var refreshItems = function(element){
+    var arr = element.domElements.types.array.jschItems;
+    var $elem = $(element.domElements.types.object);
+    var i;
+    
+    $elem.children().remove();
+    
+    for(i=0; i<arr.length; i++) {
+      addItem(element, i);
+    }
+  };
+  var addItem = function(element, item){
+    if(!element.domElements.types.array.jschItems[item]) return;
+    
+    var removeSubElement = function(i){
+      element.domElements.types.array.jschItems[i].domElements.root.parentNode.parentNode.removeChild(element.domElements.types.array.jschItems[i].domElements.root.parentNode);
+      element.domElements.types.jschItems.splice(i, 1);
+      element.revalidate();
+    };
+    var $elem = $(element.domElements.types.array);
+    
+    var tmp = element.domElements.types.array.jschItems[item]; // TODO find a better name for this var
+    
+    var li = document.createElement("li");
+      
+    var inputGroup = document.createElement("div");
+    inputGroup.setAttribute("class", "input-group");
+    
+    var removeBtn = createAddon("remove");
+    $(removeBtn)
+      //.text("remove")
+      .addClass("label-danger")
+      .on("click", function(){
+        removeSubElement(tmp);
+      });
+    
+    var collapseBtn = createAddon("collapse");
+    var $collapseBtn = $(collapseBtn);
+    
+    $collapseBtn.on("click", function(){
+      if($collapseBtn.text() === "collapse") {
+        $collapseBtn.text("expand");
+        $(tmp.domElements.root).hide();
+      } else {
+        $collapseBtn.text("collapse");
+        $(tmp.domElements.root).show();
+      }
+    });
+    
+    var moveUpBtn = createAddon("&#8593;");
+    var moveDownBtn = createAddon("&#8595;");
+    
+    var $moveUpBtn = $(moveUpBtn);
+    var $moveDownBtn = $(moveDownBtn);
+    
+    $moveUpBtn.on("click", function(){
+      console.log("// TODO: up...");
+    });
+    $moveDownBtn.on("click", function(){
+      console.log("// TODO: down...");
+    });
+    
+    $(inputGroup).append(collapseBtn, moveUpBtn, moveDownBtn, removeBtn);
+    
+    
+    $(li).append(inputGroup, tmp.domElements.root);
+    
+    $elem.append(li);
+    element.revalidate();
+  };
 
   var createNull = function(doms, element){
     var tab = createTab("Null", !(!element.getJsonSchema().type || element.getJsonSchema().type.indexOf("null")>=0), doms, element);
@@ -312,82 +380,11 @@
     $content.append(inputGroup, createKeyBtn, elem);
   };
   var createArray = function(doms, element){
-    // TODO: move an item up or down
-    var findSubSchema = function(pos){
-      var oldSchema = element.getJsonSchema();
-      if(oldSchema.items && oldSchema.items[pos]) return oldSchema.items[pos];
-      
-      if(typeof oldSchema.additionalItems === "object") return oldSchema.additionalItems;
-      return {};
-    };
-    
     var addSubElement = function(value){
-      var subSchema = element.getSubSchema(elem.jschItems.length);
-      
+      var subSchema = element.getSubSchema(element.getValue().length);
+      if(subSchema.$ref) subSchema = Jsch.getSchemaFromDictionary(subSchema.$ref, element.getBase());
       if(value === undefined) value = subSchema.default;
-      var tmp = new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema});
-      elem.jschItems.push(tmp);
-      
-      var li = document.createElement("li");
-      
-      var inputGroup = document.createElement("div");
-      inputGroup.setAttribute("class", "input-group");
-      
-      var removeBtn = createAddon("remove");
-      $(removeBtn)
-        //.text("remove")
-        .addClass("label-danger")
-        .on("click", function(){
-          removeSubElement(tmp);
-        });
-      
-      var collapseBtn = createAddon("collapse");
-      var $collapseBtn = $(collapseBtn);
-      
-      $collapseBtn.on("click", function(){
-        if($collapseBtn.text() === "collapse") {
-          $collapseBtn.text("expand");
-          $(tmp.domElements.root).hide();
-        } else {
-          $collapseBtn.text("collapse");
-          $(tmp.domElements.root).show();
-        }
-      });
-      
-      var moveUpBtn = createAddon("&#8593;");
-      var moveDownBtn = createAddon("&#8595;");
-      
-      var $moveUpBtn = $(moveUpBtn);
-      var $moveDownBtn = $(moveDownBtn);
-      
-      $moveUpBtn.on("click", function(){
-        console.log("// TODO: up...");
-      });
-      $moveDownBtn.on("click", function(){
-        console.log("// TODO: down...");
-      });
-      
-      $(inputGroup).append(collapseBtn, moveUpBtn, moveDownBtn, removeBtn);
-      
-      
-      $(li).append(inputGroup, tmp.domElements.root);
-      
-      $elem.append(li);
-      element.revalidate();
-      
-      return;
-      
-    };
-    var removeSubElement = function(elem){
-      var i;
-      var items = element.domElements.types.array.jschItems;
-      for (i=0; i<items.length; i++) {
-        if(items[i]===elem) {
-          element.domElements.types.array.removeChild(element.domElements.types.array.children[i]);
-          items.splice(i, 1);
-        }
-      }
-      element.revalidate();
+      addItem(element, (element.domElements.types.array.jschItems.push(new Element({parent: element, value: value, Jsch:element.Jsch, jsonSchema: subSchema})))-1);   
     };
     
     var elem = element.domElements.types.array;
@@ -458,9 +455,7 @@
         var items = obj.jschItems;
         var i;
         
-        for (i=0; i<items.length; i++) {
-          addItem(elem, i);
-        }
+        refreshItems(elem);
       }
     };
     
@@ -942,7 +937,7 @@
           var obj = this.domElements.types.object.jschProperties = {};
           var hash;
           for(hash in val) {
-            obj[hash] = new Element({parent:self, value: val[hash], Jsch: self.Jsch, jsonSchema: self.getSubSchema(hash)});
+            obj[hash] = new Element({parent:self, Jsch: self.Jsch, jsonSchema: self.getSubSchema(hash), value: val[hash]});
           }
           this.domElements.type.value = "object";
           break;
@@ -950,7 +945,7 @@
           var arr = this.domElements.types.array.jschItems = [];
           var i;
           for(i=0; i<val.length; i++) {
-            arr.push(new Element({parent:this, value: val[hash], Jsch: self.Jsch, jsonSchema: self.getSubSchema(i)}));
+            arr.push(new Element({parent:this, Jsch: self.Jsch, jsonSchema: self.getSubSchema(i), value: val[i]}));
           }
           this.domElements.type.value = "array";
           break;
