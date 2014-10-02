@@ -878,7 +878,7 @@
       setTimeout(validate, 0); // let us validate in async mode...
     };
     
-    $([self.domElements.types.string, self.domElements.types.number, self.domElements.types.boolean]).on("input", validate);
+    $([self.domElements.types.string, self.domElements.types.number, self.domElements.types.boolean]).on("change", validate);
     $([self.domElements.types.object, self.domElements.types.array]).on("DOMSubtreeModified", validate);
     
     this.getValue = function(){
@@ -986,7 +986,7 @@
       else if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) bool = false;
       
       if(self.domElements.type.value === "array" && !self.validations.array.uniqueItems() || !runValidations("any")) {
-        setTimeout(validate, 1000);
+        //setTimeout(validate, 1000);
         console.log("// TODO: solve this a little bit nicer");
       }
       
