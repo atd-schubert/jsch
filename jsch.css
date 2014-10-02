@@ -10,6 +10,7 @@ input.invalid { background-color: #ffaaaa;}
 .jsch-element.jsch-validation-number-minimum-invalid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-minimum,
 
 .jsch-element.jsch-validation-any-type-invalid > .panel-heading > .input-group .jsch-validation-out-any-type,
+.jsch-element.jsch-validation-any-enum-invalid > .panel-heading > .input-group .jsch-validation-out-any-enum,
 .jsch-element.jsch-validation-any-anyOf-invalid > .panel-heading > .input-group .jsch-validation-out-any-anyOf,
 .jsch-element.jsch-validation-any-allOf-invalid > .panel-heading > .input-group .jsch-validation-out-any-allOf,
 .jsch-element.jsch-validation-any-oneOf-invalid > .panel-heading > .input-group .jsch-validation-out-any-oneOf,
@@ -38,6 +39,7 @@ input.invalid { background-color: #ffaaaa;}
 .jsch-element.jsch-validation-number-minimum-valid > div > .jsch-types-content > .jsch-type-number .jsch-validation-out-number-minimum,
 
 .jsch-element.jsch-validation-any-type-valid > .panel-heading > .input-group .jsch-validation-out-any-type,
+.jsch-element.jsch-validation-any-enum-valid > .panel-heading > .input-group .jsch-validation-out-any-enum,
 .jsch-element.jsch-validation-any-anyOf-valid > .panel-heading > .input-group .jsch-validation-out-any-anyOf,
 .jsch-element.jsch-validation-any-allOf-valid > .panel-heading > .input-group .jsch-validation-out-any-allOf,
 .jsch-element.jsch-validation-any-oneOf-valid > .panel-heading > .input-group .jsch-validation-out-any-oneOf,
