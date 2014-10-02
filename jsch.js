@@ -1027,13 +1027,30 @@
       root: document.createElement("div")
     };
     $(this.domElements.root).addClass("jsch-root");
-    this.addView = function(id, renderFn){
+    
+    this.send = function(args){
+      args.enctype = args.enctype || opts.enctype || "application/json"; //application/x-www-form-urlencoded
+      args.success = args.success || function(){};
+      args.parameter = args.parameter || opts.parameter || "json"; // only for enctype urlencoded
+      args.url = args.url || opts.url;
+      // it's better to set method stricly to POST // args.method = args.method || opts.method || "POST"; // You can't get
+      if(!args.url) throw new Error("You have to set an url ");
       
-    };
-    this.removeView = function(id, renderFn){
+      if(args.enctype.toLowerCase() === "application/x-www-form-urlencoded") {
+        var data = {};
+        data[args.parameter] = JSON.stringify(this.getData());
+      } else {
+        var data = JSON.stringify(this.getData());
+      }
       
+      $.ajax({
+        url: args.url,
+        data: data,
+        type: "POST",
+        contentType: args.enctype,
+        success: args.success
+      });
     };
-    this.renderView = function(id,  data ){};
     
     var first = new Element({Jsch: self});
     opts.data = opts.data || null;
