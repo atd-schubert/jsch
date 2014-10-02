@@ -874,8 +874,9 @@
       return isWholeElementValid;      
     };
     var refresh = function(){
+      numRefreshes++;
       if(self.domElements.root.refresh) self.domElements.root.refresh();
-      setTimeout(validate, 0); // let us validate in async mode...
+      setTimeout(function(){validate(); numRefreshes--; if(numRefreshes===0) onJschInit=false;}, 0); // let us validate in async mode...
     };
     
     $([self.domElements.types.string, self.domElements.types.number, self.domElements.types.boolean]).on("change", validate);
@@ -992,7 +993,7 @@
       
       if(bool) $root.removeClass("jsch-validation-subinvalid");
       else $root.addClass("jsch-validation-subinvalid");      
-      if(parent) parent.checkSubValidity();
+      if(parent && !onJschInit) parent.checkSubValidity();
       return bool;
     };
     
@@ -1020,7 +1021,9 @@
       return first.getValue();
     };
     this.setData = function(data){
-      return first.setValue(data);
+      onJschInit = true;
+      var rg = first.setValue(data);
+      return rg;
     };
     
     this.domElements = {
@@ -1060,6 +1063,8 @@
      
   };
   Jsch.views = {};
+  var onJschInit=false;
+  var numRefreshes=0;
   Jsch.render = function(elem){
     var id = elem.getSchema().id;
     if(id in Jsch.views) Jsch.views[id](elem);
