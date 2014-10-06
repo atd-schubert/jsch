@@ -869,7 +869,7 @@
       else $(self.domElements.root).removeClass("jsch-validation-valid").addClass("jsch-validation-invalid");
       
       var parent = self.getParent();
-      self.checkSubValidity();
+      if(!onJschInit) self.checkSubValidity();
       
       return isWholeElementValid;      
     };
@@ -993,7 +993,7 @@
       
       if(bool) $root.removeClass("jsch-validation-subinvalid");
       else $root.addClass("jsch-validation-subinvalid");      
-      if(parent && !onJschInit) parent.checkSubValidity();
+      if(parent) parent.checkSubValidity();
       return bool;
     };
     
