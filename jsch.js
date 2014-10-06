@@ -931,7 +931,7 @@
           this.domElements.type.value = "number";
           break;
         case "boolean":
-          this.domElements.types.number.checked = val;
+          this.domElements.types.boolean.checked = val;
           this.domElements.type.value = "boolean";
           break;
         case "object":
