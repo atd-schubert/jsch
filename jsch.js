@@ -54,7 +54,7 @@
         $(btn.parentNode).addClass("active");
         element.domElements.type.value=name.toLowerCase();
         
-        element.revalidate();
+        element.Jsch.validate();
         $(doms.typeContent).children().hide().removeClass("active");
         $(content).show();
       });
@@ -74,7 +74,7 @@
     var removeSubElement = function(name){
       element.domElements.types.object.jschProperties[name].domElements.root.parentNode.parentNode.removeChild(element.domElements.types.object.jschProperties[name].domElements.root.parentNode);
       delete element.domElements.types.object.jschProperties[name];
-      element.revalidate();
+      element.Jsch.validate();
     };
     var $elem = $(element.domElements.types.object);
     
@@ -118,7 +118,7 @@
     $(li).append(inputGroup, tmp.domElements.root);
     
     $elem.append(li);
-    element.revalidate();
+    element.Jsch.validate();
   };
   var refreshItems = function(element){
     var arr = element.domElements.types.array.jschItems;
@@ -137,7 +137,7 @@
     var removeSubElement = function(i){
       element.domElements.types.array.jschItems[i].domElements.root.parentNode.parentNode.removeChild(element.domElements.types.array.jschItems[i].domElements.root.parentNode);
       element.domElements.types.jschItems.splice(i, 1);
-      element.revalidate();
+      element.Jsch.validate();
     };
     var $elem = $(element.domElements.types.array);
     
@@ -188,7 +188,7 @@
     $(li).append(inputGroup, tmp.domElements.root);
     
     $elem.append(li);
-    element.revalidate();
+    element.Jsch.validate();
   };
 
   var createNull = function(doms, element){
@@ -217,7 +217,7 @@
         $(btn.parentNode).addClass("active");
         element.domElements.type.value="boolean";
         
-        element.revalidate();
+        element.Jsch.validate();
         $(doms.typeContent).children().hide().removeClass("active");
         $(content).show();
       });
@@ -513,11 +513,11 @@
     $root.append($body);
   };
   
-  var Element = function(opts){
-    //# Error handling
+  var Element = function(opts){    //# Error handling
     if(!opts.Jsch) throw new Error("Don't have a handle for the main Jsch controller");
     var self = this;
-  
+    
+    this.Jsch = opts.Jsch;
     //# private constants and variables
     var schema = opts.jsonSchema || opts.Jsch.getJsonSchema();
     
@@ -566,321 +566,71 @@
     this.domElements.types.object.jschProperties = {};
     setAttributes(this.domElements.type, {type:"hidden"});
     
-    // validations
-    this.validations = {
-      number: {
-        multipleOf: function(){
-          if(schema.multipleOf || schema.type && schema.type.indexOf("integer")>=0) {
-            var val = parseFloat(self.domElements.types.number.value);
-            var mo = schema.multipleOf || 1;
-            while (mo<1) {
-              mo*10;
-              val*10;
-            }
-            return (val % mo === 0);
-          }
-          return true;
-        },
-        minimum: function(){
-          if(schema.minimum) {
-            var val = parseFloat(self.domElements.types.number.value);
-            if(schema.exclusiveMinimum) return val>schema.minimum;
-            else return val>=schema.minimum;
-          }
-          return true;
-        },
-        maximum: function(){
-          if(schema.maximum) {
-            var val = parseFloat(self.domElements.types.number.value);
-            if(schema.exclusiveMaximum) return val<schema.maximum;
-            else return val<=schema.maximum;
-          }
-          return true;
-        }
-      },
-      string: {
-        pattern: function(){
-          if(schema.pattern) {
-            var val = self.domElements.types.string.value;
-            return (new RegExp(schema.pattern)).test(val);
-          }
-          return true;
-        },
-        minLength: function(){
-          if(schema.minLength) {
-            var val = self.domElements.types.string.value;
-            return val.length>=schema.minLength;
-          }
-          return true;
-        },
-        maxLength: function(){
-          if(schema.maxLength) {
-            var val = self.domElements.types.string.value;
-            return val.length<=schema.maxLength;
-          }
-          return true;
-        },
-        format: function(){
-          if(schema.format) {
-            var val = self.domElements.types.string.value;
-            switch (schema.format) {
-              case "email":
-                return /^[a-z0-9]+([\.\-_]?[a-z0-9]+)*@[a-z0-9]+([\.\-_]?[a-z0-9]+)*$/i.test(val);
-              case "uri":
-                return /^[a-z][a-z0-9]*:[a-z0-9\.\-\_\/]*$/i.test(val);
-              case "ipv4":
-                return /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$/.test(val);
-              case "date-time":
-                return /^[0-9]{1,4}\-(1[0-2]|0[1-9])\-(3[0-1]|[12][0-9]|0[1-9])T(2[0-4]|[0-1][0-9]):(60|[0-5][0-9]):(60|[0-5][0-9])\.[0-9]{3}Z$/.test(val);
-              case "hostname":
-                return /^[a-z0-9]+([\.\-_]?[a-z0-9]+)*$/i.test(val);
-              case "ipv6":
-                return /^([0-9a-f]{0,4}:){7}[0-9a-f]{0,4}$/i.test(val);
-            }
-          }
-          return true;
-        },
-      },
-      object: {
-        maxProperties: function(){
-          if(schema.maxProperties) {
-            var val = self.domElements.types.object.jschProperties;
-            var hash;
-            var i=0;
-            for (hash in val) {
-              i++;
-            }
-            return schema.maxProperties >= i;
-          }
-          return true;
-        },
-        minProperties: function(){
-          if(schema.minProperties) {
-            var val = self.domElements.types.object.jschProperties;
-            var hash;
-            var i=0;
-            for (hash in val) {
-              i++;
-            }
-            return schema.minProperties <= i;
-          }
-          return true;
-        },
-        required: function(){
-          if(schema.required) {
-            var val = self.domElements.types.object.jschProperties;
-            var isEverythingRequired = true;
-            var i;
-            for (i=0; i<schema.required.length; i++) {
-              if(!(schema.required[i] in val)) {
-                isEverythingRequired = false;
-                break;
-              }
-            }
-            return isEverythingRequired;
-          }
-          return true;
-        },
-        properties: function(){ // patternProperties, additional properties
-          var val = self.domElements.types.object.jschProperties;
-          if(schema.additionalProperties === false) {
-            var i, hash;
-            
-            var patternRegExps = [];
-            var oneOfThem = true;
-            
-            if(schema.patternProperties) {
-              try {
-                for (i=0; i<schema.patternProperties.length; i++) {
-                  patternRegExps.push( new RegExp(schema.patternProperties[i]));
-                }
-              } catch (e) {console.error(e);};
-            }
-            
-            
-            for (hash in val) {
-              if(schema && schema.properties && !(hash in schema.properties)) {
-                oneOfThem = false;
-                for(i=0; i<patternRegExps; i++) {
-                  if(patternRegExps[i].test(hash)) {
-                    oneOfThem = true;
-                    break;
-                  }
-                }
-                return oneOfThem;
-              }
-            }
-          }
-          //else if(typeof schema.additionalProperties === "object") {
-            // There is nothing todo, because this is already validated by a subschema
-          //}
-          return true;
-        },
-        dependencies: function(){
-          if(schema.dependencies) {
-            var val = self.domElements.types.object.jschProperties;
-            var hash, i;
-            for (hash in schema.dependencies) {
-              if(hash in val) {
-                for (i=0; i<schema.dependencies[hash]; i++) {
-                  if(!val[schema.dependencies[hash][i]]) return false;
-                }
-              }
-            }
-          }
-          return true;
-        }
-      },
-      array: {
-        items: function(){
-          if(schema.additionalItems === false) {
-            var val = self.domElements.types.array.jschItems;
-            //if(val.length !== schema.items.length) return false;
-            var i;
-            
-            if(Array.prototype.isPrototypeOf(schema.items)) {
-              for(i=0; i<val.length; i++) {
-                val[i].setJSONSchema(schema.items[i]);
-                if(val[i].getStatus()!=="valid") return false;
-              }
-            } else if (typeof schema.items === "object"){
-              var tmp = new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.items, parent: self.getParent(), parentBase: self.getBase()});
-              if(tmp.getStatus() !== "valid") return false;
-            }
-            
-
-          }
-          return true;
-        },
-        maxItems: function(){
-          if("maxItems" in schema) {
-            var val = self.domElements.types.array.jschItems;
-            return val.length <= schema.maxItems;
-          }
-          return true;
-        },
-        minItems: function(){
-          if("minItems" in schema) {
-            var val = self.domElements.types.array.jschItems;
-            return val.length >= schema.minItems;
-          }
-          return true;
-        },
-        uniqueItems: function(){
-          if(schema.uniqueItems) {
-            var val = self.getValue();
-            if(Array.prototype.isPrototypeOf(val)) {
-              return val.length === _.uniq(val).length;
-            }
-          }
-          return true;
-        }
-      },
-      any: {
-        type: function(){
-          var val = self.domElements.type.value;
-          if(schema.type) {
-            return schema.type.indexOf(val) >=0;
-          }
-          return true;
-        },
-        enum: function(){
-          if(schema.enum) {
-            var i;
-            var val = self.getValue();
-            var oneOfThem = false;
-            for(i=0; i<schema.enum.length; i++) {
-              if(_.isEqual(schema.enum[i], val)) {
-                oneOfThem = true;
-                break;
-              }
-            }
-            return oneOfThem;
-          }
-          return true;
-        },
-        allOf: function(){
-          if(schema.allOf) {
-            var i;
-            for (i=0; i<schema.allOf.length; i++) {
-              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.allOf[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() !== "valid") return false;
-            }
-          }
-          return true;
-        },
-        anyOf: function(){
-          if(schema.anyOf) {
-            var i;
-            for (i=0; i<schema.anyOf.length; i++) {
-              var tmp = new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.anyOf[i], parent: self.getParent(), parentBase: self.getBase()});
-              if(tmp.getStatus() === "valid") return true;
-            }
-            return false
-          }
-          return true;
-        },
-        oneOf: function(){
-          if(schema.oneOf) {
-            var i, n=0;
-            for (i=0; i<schema.oneOf.length; i++) {
-              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.oneOf[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() === "valid") n++;
-            }
-            return n === 1;
-          }
-          return true;
-        },
-        not: function(){
-          if(schema.not) {
-            var i;
-            for (i=0; i<schema.not.length; i++) {
-              if((new Element({Jsch:self.Jsch, value: self.getValue(), jsonSchema: schema.not[i], parent: self.getParent(), parentBase: self.getBase() })).getStatus() === "valid") return false;
-            }
-          }
-          return true;
-        } //, Definitions are more a feature than a validation...
-        //definitions: function(){
-        //  return true;
-        //}
-      }
-      
-    };
-    
-    var runValidations = function(type){
-      var validations = self.validations[type]; if(!validations) return true; // unnknown type
-      var hash;
-      var isEverythingValid = true;
+    this.setValidation = function(data){
       var $root = $(self.domElements.root);
-      for (hash in validations) {
-        if(validations[hash]()) $root.removeClass("jsch-validation-"+type+"-"+hash+"-invalid").addClass("jsch-validation-"+type+"-"+hash+"-valid");
-        else {
-          $root.removeClass("jsch-validation-"+type+"-"+hash+"-valid").addClass("jsch-validation-"+type+"-"+hash+"-invalid");
-          isEverythingValid = false;
+      //console.log("root",data, $root);
+      $root
+        .removeClass([
+          "jsch-validation-subinvalid", // subvalidation
+          "jsch-validation-invalid", // over all
+          "jsch-validation-type-invalid jsch-validation-enum-invalid jsch-validation-allOf-invalid jsch-validation-anyOf-invalid jsch-validation-oneOf-invalid jsch-validation-not-invalid", // any
+          "jsch-validation-pattern-invalid jsch-validation-minLength-invalid jsch-validation-maxLength-invalid jsch-validation-format-invalid", // string
+          "jsch-validation-multipleOf-invalid jsch-validation-minimum-invalid jsch-validation-maximum-invalid", // number
+          "jsch-validation-maxProperties-invalid jsch-validation-minProperties-invalid jsch-validation-required-invalid jsch-validation-properties-invalid jsch-validation-dependencies-invalid", // object
+          "jsch-validation-items-invalid jsch-validation-maxItems-invalid jsch-validation-minItems-invalid jsch-validation-uniqueItems-invalid" // Array
+        ].join(" "))
+        .addClass([
+          "jsch-validation-valid", // over all
+          "jsch-validation-type-valid jsch-validation-enum-valid jsch-validation-allOf-valid jsch-validation-anyOf-valid jsch-validation-oneOf-valid jsch-validation-not-valid", // any
+          "jsch-validation-pattern-valid jsch-validation-minLength-valid jsch-validation-maxLength-valid jsch-validation-format-valid", // string
+          "jsch-validation-multipleOf-valid jsch-validation-minimum-valid jsch-validation-maximum-valid", // number
+          "jsch-validation-maxProperties-valid jsch-validation-minProperties-valid jsch-validation-required-valid jsch-validation-properties-valid jsch-validation-dependencies-valid", // object
+          "jsch-validation-items-valid jsch-validation-maxItems-valid jsch-validation-minItems-valid jsch-validation-uniqueItems-valid" // Array
+        ].join(" "));
+        var hash;
+        if(typeof data === "object") {
+          for (hash in data) {
+            if(data[hash] === true) $root.removeClass("jsch-validation-"+hash+"-valid  jsch-validation-valid").addClass("jsch-validation-"+hash+"-invalid jsch-validation-invalid");
+            if(hash === "type") $root.removeClass("jsch-validation-type-valid  jsch-validation-valid").addClass("jsch-validation-type-invalid jsch-validation-invalid");
+          }
         }
-      }
-      return isEverythingValid;
+        //console.log("111",data, $root);
+        data = data && data.schema || {};
+        
+        //console.log("222",data);
+        
+        for (hash in data) if(data[hash].required) $root.removeClass("jsch-validation-required-valid jsch-validation-valid").addClass("jsch-validation-required-invalid jsch-validation-invalid");
+        
+        if(self.domElements.type.value.toLowerCase() === "object") {
+          for (hash in self.domElements.types.object.jschProperties) {
+            if(typeof data[hash] === "object") self.domElements.types.object.jschProperties[hash].setValidation(data[hash]);
+            else self.domElements.types.object.jschProperties[hash].setValidation(null);
+          }
+        } else if (self.domElements.type.value.toLowerCase() === "array") {
+          for (hash = 0; hash < self.domElements.types.array.jschItems.length; hash++) {
+            if(typeof data[hash.toString()] === "object") {
+              self.domElements.types.array.jschItems[hash].setValidation(data[hash.toString()]);
+            }
+            else self.domElements.types.array.jschItems[hash].setValidation(null);
+          }
+        }
+        if($(self.domElements.root).hasClass("jsch-validation-valid")) return;
+        var parent = self.getParent();
+        while(parent) {
+          $(parent.domElements.root).addClass("jsch-validation-subinvalid");
+          parent = parent.getParent();
+        }
+        
     };
     
-    var validate = function(){
-      var isWholeElementValid = runValidations(self.domElements.type.value.toLowerCase());
-      
-      if (!runValidations("any")) isWholeElementValid = false;
-      
-      if(isWholeElementValid) $(self.domElements.root).removeClass("jsch-validation-invalid").addClass("jsch-validation-valid");
-      else $(self.domElements.root).removeClass("jsch-validation-valid").addClass("jsch-validation-invalid");
-      
-      var parent = self.getParent();
-      if(!onJschInit) self.checkSubValidity();
-      
-      return isWholeElementValid;      
-    };
+
     var refresh = function(){
-      numRefreshes++;
       if(self.domElements.root.refresh) self.domElements.root.refresh();
-      setTimeout(function(){validate(); numRefreshes--; if(numRefreshes===0) onJschInit=false;}, 0); // let us validate in async mode...
+      setTimeout(function(){opts.Jsch.validate(); /*numRefreshes--; if(numRefreshes===0) onJschInit=false;*/}, 0); // let us validate in async mode...
     };
     
-    $([self.domElements.types.string, self.domElements.types.number, self.domElements.types.boolean]).on("change", validate);
-    $([self.domElements.types.object, self.domElements.types.array]).on("DOMSubtreeModified", validate);
+    $([self.domElements.types.string, self.domElements.types.number, self.domElements.types.boolean]).on("change", opts.Jsch.validate);
+    $([self.domElements.types.object, self.domElements.types.array]).on("DOMSubtreeModified", opts.Jsch.validate);
     
     this.getValue = function(){
       if(!this.domElements.type.value) return;
@@ -954,6 +704,7 @@
       refresh();
     };
     this.Jsch = opts.Jsch;
+    
     this.setSchema = this.setJsonSchema = this.setJSONSchema = function(val){schema = val;};
     this.getSchema = this.getJsonSchema = this.getJSONSchema = function(){return schema;};
     this.getSubSchema = function(name){
@@ -972,29 +723,6 @@
         if(typeof schema.additionalItems === "object") return schema.additionalItems;
       }
       return {type:"null", title:"Invalid Subschema", description:"Jsch can't find a valid subschema..."};
-    };
-    this.revalidate = function(){validate();};
-    this.getStatus = function(){
-      if(!validate()) return "invalid";
-      if(!self.checkSubValidity()) return "sub-invalid";
-      return "valid";
-    };
-    this.checkSubValidity = function() {
-      var parent = self.getParent();
-      var bool = true;
-      var $root = $(self.domElements.root);
-      if(self.domElements.type.value !== "array" && self.domElements.type.value !== "object") bool = true;
-      else if($root.find(".jsch-validation-invalid.jsch-element").length !== 0) bool = false;
-      
-      if(self.domElements.type.value === "array" && !self.validations.array.uniqueItems() || !runValidations("any")) {
-        //setTimeout(validate, 1000);
-        console.log("// TODO: solve this a little bit nicer");
-      }
-      
-      if(bool) $root.removeClass("jsch-validation-subinvalid");
-      else $root.addClass("jsch-validation-subinvalid");      
-      if(parent) parent.checkSubValidity();
-      return bool;
     };
     
     Jsch.render(this);
@@ -1031,6 +759,47 @@
     };
     $(this.domElements.root).addClass("jsch-root");
     
+    /*var resetValidations = function(allElements){
+      var queryString = ".jsch-element";
+      $(self.domElements.root).find(queryString)
+        .removeClass([
+          "jsch-validation-invalid", // over all
+          "jsch-validation-type-invalid jsch-validation-enum-invalid jsch-validation-allOf-invalid jsch-validation-anyOf-invalid jsch-validation-oneOf-invalid jsch-validation-not-invalid", // any
+          "jsch-validation-pattern-invalid jsch-validation-minLength-invalid jsch-validation-maxLength-invalid jsch-validation-format-invalid", // string
+          "jsch-validation-multipleOf-invalid jsch-validation-minimum-invalid jsch-validation-maximum-invalid", // number
+          "jsch-validation-maxProperties-invalid jsch-validation-minProperties-invalid jsch-validation-required-invalid jsch-validation-properties-invalid jsch-validation-dependencies-invalid", // object
+          "jsch-validation-items-invalid jsch-validation-maxItems-invalid jsch-validation-minItems-invalid jsch-validation-uniqueItems-invalid" // Array
+        ].join(" "))
+        .addClass([
+          "jsch-validation-valid", // over all
+          "jsch-validation-type-valid jsch-validation-enum-valid jsch-validation-allOf-valid jsch-validation-anyOf-valid jsch-validation-oneOf-valid jsch-validation-not-valid", // any
+          "jsch-validation-pattern-valid jsch-validation-minLength-valid jsch-validation-maxLength-valid jsch-validation-format-valid", // string
+          "jsch-validation-multipleOf-valid jsch-validation-minimum-valid jsch-validation-maximum-valid", // number
+          "jsch-validation-maxProperties-valid jsch-validation-minProperties-valid jsch-validation-required-valid jsch-validation-properties-valid jsch-validation-dependencies-valid", // object
+          "jsch-validation-items-valid jsch-validation-maxItems-valid jsch-validation-minItems-valid jsch-validation-uniqueItems-valid" // Array
+        ].join(" "));
+        
+      $(self.domElements.root).find(".jsch-validation-subinvalid").removeClass("jsch-validation-subinvalid");
+    };//*/
+    
+    this.validate = function(){
+      var schema = {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          //jsch:{}
+        },
+        maxProperties: 1
+      };
+      schema.properties.jsch = first.getSchema();
+      
+      //console.log("call", schema,{jsch: first.getValue()});
+      var result = Jsch.validator.validate(schema,{jsch: first.getValue()});
+      //resetValidations();
+      //console.log("res", result && result.validation && result.validation.jsch || null);
+      first.setValidation(result && result.validation && result.validation.jsch || null);
+    };
+    
     this.send = function(args){
       args.enctype = args.enctype || opts.enctype || "application/json"; //application/x-www-form-urlencoded
       args.success = args.success || function(){};
@@ -1063,6 +832,7 @@
      
   };
   Jsch.views = {};
+  Jsch.validator = jjv();
   var onJschInit=false;
   var numRefreshes=0;
   Jsch.render = function(elem){
@@ -1079,8 +849,9 @@
       if(schema.id.substr(-1)!== "#") schema.id += "#";
       Jsch.dictionary[schema.id] = schema;
     }
+    Jsch.validator.addSchema(schema.id, schema);
     // crawling sub schemas
-    if(schema.definitions) {
+    /*if(schema.definitions) {
       var hash;
       for (hash in schema.definitions) {
         Jsch.addToDictionary(schema.definitions[hash]);
@@ -1134,6 +905,7 @@
         Jsch.addToDictionary(schema.not[i]);
       }
     }
+    //*/
   };
   Jsch.getSchemaFromDictionary = function(url, base){
     var resolve = function(base, path){
@@ -1168,6 +940,7 @@
     }
     return false;
   };
+  Jsch.addFormat = function(){}; // TODO: ...
   
   // Add the default JSON-Schema and hyper schema for JSON-Schemas
   Jsch.addToDictionary({id:"http://json-schema.org/draft-04/schema#",$schema:"http://json-schema.org/draft-04/schema#",description:"Core schema meta-schema",definitions:{schemaArray:{type:"array",minItems:1,items:{$ref:"#"}},positiveInteger:{type:"integer",minimum:0},positiveIntegerDefault0:{allOf:[{$ref:"#/definitions/positiveInteger"},{"default":0}]},simpleTypes:{"enum":["array","boolean","integer","null","number","object","string"]},stringArray:{type:"array",items:{type:"string"},minItems:1,uniqueItems:true}},type:"object",properties:{id:{type:"string",format:"uri"},$schema:{type:"string",format:"uri"},title:{type:"string"},description:{type:"string"},"default":{},multipleOf:{type:"number",minimum:0,exclusiveMinimum:true},maximum:{type:"number"},exclusiveMaximum:{type:"boolean","default":false},minimum:{type:"number"},exclusiveMinimum:{type:"boolean","default":false},maxLength:{$ref:"#/definitions/positiveInteger"},minLength:{$ref:"#/definitions/positiveIntegerDefault0"},pattern:{type:"string",format:"regex"},additionalItems:{anyOf:[{type:"boolean"},{$ref:"#"}],"default":{}},items:{anyOf:[{$ref:"#"},{$ref:"#/definitions/schemaArray"}],"default":{}},maxItems:{$ref:"#/definitions/positiveInteger"},minItems:{$ref:"#/definitions/positiveIntegerDefault0"},uniqueItems:{type:"boolean","default":false},maxProperties:{$ref:"#/definitions/positiveInteger"},minProperties:{$ref:"#/definitions/positiveIntegerDefault0"},required:{$ref:"#/definitions/stringArray"},additionalProperties:{anyOf:[{type:"boolean"},{$ref:"#"}],"default":{}},definitions:{type:"object",additionalProperties:{$ref:"#"},"default":{}},properties:{type:"object",additionalProperties:{$ref:"#"},"default":{}},patternProperties:{type:"object",additionalProperties:{$ref:"#"},"default":{}},dependencies:{type:"object",additionalProperties:{anyOf:[{$ref:"#"},{$ref:"#/definitions/stringArray"}]}},"enum":{type:"array",minItems:1,uniqueItems:true},type:{anyOf:[{$ref:"#/definitions/simpleTypes"},{type:"array",items:{$ref:"#/definitions/simpleTypes"},minItems:1,uniqueItems:true}]},allOf:{$ref:"#/definitions/schemaArray"},anyOf:{$ref:"#/definitions/schemaArray"},oneOf:{$ref:"#/definitions/schemaArray"},not:{$ref:"#"}},dependencies:{exclusiveMaximum:["maximum"],exclusiveMinimum:["minimum"]},"default":{}})
